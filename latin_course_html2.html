@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUDUS LATINUS - Roma Invicta Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        roma: {
+                            gold: '#FFC837',
+                            amber: '#F59E0B',
+                            crimson: '#FF3366',
+                            purple: '#6C5CE7',
+                            green: '#00B894',
+                            blue: '#0984E3',
+                            bg: '#F8FAFC'
+                        }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Outfit', 'sans-serif'],
+                    },
+                    keyframes: {
+                        bounceLittle: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' }
+                        },
+                        popIn: {
+                            '0%': { transform: 'scale(0.92)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
+                    },
+                    animation: {
+                        'bounce-subtle': 'bounceLittle 2s infinite',
+                        'pop-in': 'popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            background-color: #f1f5f9;
+        }
+        h1, h2, h3, h4, .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+        .btn-3d {
+            transition: all 0.1s ease;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.18);
+        }
+        .btn-3d:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.18) !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #FFC837;
+            border-radius: 10px;
+        }
+        .tag-slot {
+            min-height: 44px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col selection:bg-roma-gold selection:text-slate-900 pb-20 md:pb-0">
+
+    <!-- TOP GAMIFICATION BAR -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b-4 border-slate-200 shadow-sm py-2 px-4 sm:px-8">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            
+            <!-- Logo / Brand -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchMainTab('historia')">
+                <div class="w-11 h-11 bg-gradient-to-tr from-roma-crimson via-amber-500 to-roma-gold rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg transform hover:rotate-6 transition">
+                    <i class="fa-solid fa-helmet-safety"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-roma-crimson via-roma-purple to-roma-blue bg-clip-text text-transparent">
+                        LUDUS LATINUS
+                    </h1>
+                    <p class="text-[10px] sm:text-xs font-semibold text-slate-400 hidden sm:block">Lingua Latina I • IES Pradolongo</p>
+                </div>
+            </div>
+
+            <!-- Stats HUD (XP, Lives, Streak) -->
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <!-- Streak -->
+                <div class="flex items-center bg-amber-100 border-2 border-amber-300 px-3 py-1 rounded-2xl font-display font-bold text-amber-700 text-xs sm:text-sm">
+                    <i class="fa-solid fa-fire text-amber-500 text-base mr-1.5 animate-bounce-subtle"></i>
+                    <span id="stat-streak">1</span>
+                </div>
+
+                <!-- XP -->
+                <div class="flex items-center bg-purple-100 border-2 border-purple-300 px-3 py-1 rounded-2xl font-display font-bold text-purple-700 text-xs sm:text-sm">
+                    <i class="fa-solid fa-star text-roma-gold text-base mr-1.5"></i>
+                    <span id="stat-xp">0</span> <span class="text-[10px] ml-1 font-normal opacity-80">XP</span>
+                </div>
+
+                <!-- Hearts/Lives -->
+                <div class="flex items-center bg-rose-100 border-2 border-rose-300 px-3 py-1 rounded-2xl font-display font-bold text-rose-600 text-xs sm:text-sm">
+                    <i class="fa-solid fa-heart text-rose-500 text-base mr-1.5"></i>
+                    <span id="stat-hearts">5</span>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- MAIN BOTTOM / TOP DESKTOP NAVIGATION TABS -->
+    <nav class="bg-white border-b-2 border-slate-200 px-4 shadow-inner sticky top-[60px] z-40">
+        <div class="max-w-5xl mx-auto flex justify-around sm:justify-center sm:space-x-8 text-xs sm:text-sm font-display font-bold">
+            <button id="nav-tab-historia" onclick="switchMainTab('historia')" class="py-3 px-3 sm:px-6 border-b-4 border-roma-purple text-roma-purple flex items-center gap-2 transition">
+                <i class="fa-solid fa-map"></i>
+                <span>Modo Historia</span>
+            </button>
+            <button id="nav-tab-practica" onclick="switchMainTab('practica')" class="py-3 px-3 sm:px-6 border-b-4 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition">
+                <i class="fa-solid fa-dumbbell text-amber-500"></i>
+                <span>Camino de Práctica</span>
+            </button>
+            <button id="nav-tab-gramatica" onclick="switchMainTab('gramatica')" class="py-3 px-3 sm:px-6 border-b-4 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition">
+                <i class="fa-solid fa-book-open text-roma-blue"></i>
+                <span>Gramática & Tablas</span>
+            </button>
+            <button id="nav-tab-perfil" onclick="switchMainTab('perfil')" class="py-3 px-3 sm:px-6 border-b-4 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition">
+                <i class="fa-solid fa-award text-roma-crimson"></i>
+                <span>Logros</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col">
+
+        <!-- ================= 1. MODO HISTORIA (CURSO OFICIAL) ================= -->
+        <section id="tab-historia" class="space-y-6 animate-pop-in">
+            
+            <!-- Hero Mascot Banner -->
+            <div class="bg-gradient-to-r from-roma-purple via-indigo-600 to-roma-blue rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute -right-8 -bottom-8 opacity-10 text-9xl font-black">SPQR</div>
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 bg-white/20 backdrop-blur border-4 border-white/40 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-inner animate-bounce-subtle">
+                            🦉
+                        </div>
+                        <div>
+                            <span class="bg-roma-gold text-slate-900 font-display text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Mascota Tito Cicerón</span>
+                            <h2 class="text-2xl sm:text-3xl font-bold font-display mt-1">Curso Completo de Latín</h2>
+                            <p class="text-slate-100 text-sm max-w-md mt-1">
+                                Sigue el temario oficial de Lingua Latina I. Desbloquea cada provincia conquistando sus contenidos.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="w-full sm:w-auto flex flex-col gap-2">
+                        <div class="bg-white/10 border border-white/20 p-3 rounded-2xl text-center">
+                            <span class="text-xs text-slate-200 block">Progreso del Temario</span>
+                            <div class="w-full bg-black/20 h-4 rounded-full mt-1 overflow-hidden p-0.5 border border-white/20">
+                                <div id="map-progress-bar" class="bg-roma-gold h-full rounded-full transition-all duration-500" style="width: 5%;"></div>
+                            </div>
+                            <span id="map-progress-text" class="text-xs font-bold font-display mt-1 inline-block">0% Completado</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Path Naming -->
+            <div class="bg-white rounded-3xl border-4 border-slate-200 p-6 sm:p-8 shadow-lg relative">
+                <h3 class="text-xl font-bold font-display text-slate-800 text-center mb-8 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-map-location-dot text-roma-crimson"></i>
+                    MAPA DE TEMAS (LINGUA LATINA I)
+                </h3>
+
+                <!-- Level Path Nodes -->
+                <div id="historia-nodes-container" class="relative z-10 flex flex-col items-center space-y-8">
+                    <!-- Nodes injected dynamically -->
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- ================= 2. CAMINO DE PRÁCTICA DEDICADA (ARENA) ================= -->
+        <section id="tab-practica" class="hidden space-y-6 animate-pop-in">
+            
+            <!-- Arena Header Banner -->
+            <div class="bg-gradient-to-r from-amber-500 via-roma-gold to-orange-500 rounded-3xl p-6 sm:p-8 text-slate-900 shadow-xl relative overflow-hidden">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white/40 backdrop-blur border-4 border-white/60 rounded-2xl flex items-center justify-center text-4xl shadow-inner">
+                            🏋️
+                        </div>
+                        <div>
+                            <span class="bg-slate-900 text-roma-gold font-display text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Gymnasium Latinum</span>
+                            <h2 class="text-2xl sm:text-3xl font-bold font-display mt-1">Gimnasio de Práctica</h2>
+                            <p class="text-slate-800 text-sm max-w-md mt-1">
+                                Domina Declinaciones, Adjetivos, Verbos y Análisis Sintáctico nivel a nivel.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Category Quick Filter Buttons -->
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="setArenaCategory('all')" id="cat-btn-all" class="px-3 py-1.5 rounded-xl text-xs font-bold font-display bg-slate-900 text-white shadow">
+                            Todos
+                        </button>
+                        <button onclick="setArenaCategory('decl')" id="cat-btn-decl" class="px-3 py-1.5 rounded-xl text-xs font-bold font-display bg-white/80 text-slate-800 hover:bg-white">
+                            Declinaciones
+                        </button>
+                        <button onclick="setArenaCategory('adj')" id="cat-btn-adj" class="px-3 py-1.5 rounded-xl text-xs font-bold font-display bg-white/80 text-slate-800 hover:bg-white">
+                            Adjetivos
+                        </button>
+                        <button onclick="setArenaCategory('verb')" id="cat-btn-verb" class="px-3 py-1.5 rounded-xl text-xs font-bold font-display bg-white/80 text-slate-800 hover:bg-white">
+                            Verbos
+                        </button>
+                        <button onclick="setArenaCategory('sintaxis')" id="cat-btn-sintaxis" class="px-3 py-1.5 rounded-xl text-xs font-bold font-display bg-white/80 text-slate-800 hover:bg-white">
+                            Análisis & Sintaxis
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Practice Levels Path Roadmap -->
+            <div class="bg-white rounded-3xl border-4 border-slate-200 p-6 sm:p-8 shadow-lg">
+                <h3 class="text-lg font-bold font-display text-slate-800 mb-6 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-route text-amber-500"></i>
+                    CAMINO DE NIVELES DE PRÁCTICA DE LATÍN
+                </h3>
+
+                <div id="arena-levels-container" class="space-y-6">
+                    <!-- Injected levels -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================= 3. GRAMÁTICA Y TABLAS ================= -->
+        <section id="tab-gramatica" class="hidden space-y-6 animate-pop-in">
+            <div class="bg-white rounded-3xl border-4 border-slate-200 p-6 shadow-md space-y-6">
+                <h2 class="text-2xl font-bold font-display text-slate-900 flex items-center gap-3">
+                    <i class="fa-solid fa-book-open text-roma-blue"></i> Compendio de Gramática Latina
+                </h2>
+
+                <!-- Tabs inside Grammar -->
+                <div class="flex border-b-2 border-slate-200 gap-4 font-display font-bold text-sm">
+                    <button onclick="showGrammarSection('decl')" id="gtab-decl" class="py-2 border-b-4 border-roma-purple text-roma-purple">Declinaciones (1ª - 5ª)</button>
+                    <button onclick="showGrammarSection('verb')" id="gtab-verb" class="py-2 border-b-4 border-transparent text-slate-400">Verbos y Conjugaciones</button>
+                    <button onclick="showGrammarSection('sint')" id="gtab-sint" class="py-2 border-b-4 border-transparent text-slate-400">Casos y Funciones</button>
+                </div>
+
+                <!-- Section Decl -->
+                <div id="gsec-decl" class="space-y-6">
+                    <!-- 1ª Declinación Table -->
+                    <div>
+                        <h4 class="font-display font-bold text-slate-800 text-base mb-2">1ª Declinación: <span class="text-purple-600">rosa, rosae (f.)</span></h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs sm:text-sm border-2 border-slate-200 rounded-xl overflow-hidden text-center">
+                                <thead class="bg-purple-100 font-bold text-purple-900">
+                                    <tr><th class="p-2">Caso</th><th class="p-2">Singular</th><th class="p-2">Plural</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 bg-white">
+                                    <tr><td class="p-2 font-bold bg-slate-50">Nom / Voc</td><td>ros-a</td><td>ros-ae</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Acusativo</td><td>ros-am</td><td>ros-as</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Genitivo</td><td>ros-ae</td><td>ros-arum</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Dativo</td><td>ros-ae</td><td>ros-is</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Ablativo</td><td>ros-a</td><td>ros-is</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2ª Declinación Table -->
+                    <div>
+                        <h4 class="font-display font-bold text-slate-800 text-base mb-2">2ª Declinación: <span class="text-blue-600">dominus, -i (m.) / templum, -i (n.)</span></h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs sm:text-sm border-2 border-slate-200 rounded-xl overflow-hidden text-center">
+                                <thead class="bg-blue-100 font-bold text-blue-900">
+                                    <tr><th class="p-2">Caso</th><th class="p-2">Masc. Sing</th><th class="p-2">Masc. Plur</th><th class="p-2">Neutro Sing</th><th class="p-2">Neutro Plur</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 bg-white">
+                                    <tr><td class="p-2 font-bold bg-slate-50">Nom.</td><td>domin-us</td><td>domin-i</td><td>templ-um</td><td>templ-a</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Acus.</td><td>domin-um</td><td>domin-os</td><td>templ-um</td><td>templ-a</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Gen.</td><td>domin-i</td><td>domin-orum</td><td>templ-i</td><td>templ-orum</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Dat./Abl.</td><td>domin-o</td><td>domin-is</td><td>templ-o</td><td>templ-is</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 3ª Declinación Table -->
+                    <div>
+                        <h4 class="font-display font-bold text-slate-800 text-base mb-2">3ª Declinación: <span class="text-emerald-600">miles, militis (m.) / nomen, nominis (n.)</span></h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs sm:text-sm border-2 border-slate-200 rounded-xl overflow-hidden text-center">
+                                <thead class="bg-emerald-100 font-bold text-emerald-900">
+                                    <tr><th class="p-2">Caso</th><th class="p-2">Masc/Fem Sing</th><th class="p-2">Masc/Fem Plur</th><th class="p-2">Neutro Sing</th><th class="p-2">Neutro Plur</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 bg-white">
+                                    <tr><td class="p-2 font-bold bg-slate-50">Nom.</td><td>miles</td><td>milit-es</td><td>nomen</td><td>nomin-a</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Acus.</td><td>milit-em</td><td>milit-es</td><td>nomen</td><td>nomin-a</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Gen.</td><td>milit-is</td><td>milit-um / -ium</td><td>nomin-is</td><td>nomin-um</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Dat.</td><td>milit-i</td><td>milit-ibus</td><td>nomin-i</td><td>nomin-ibus</td></tr>
+                                    <tr><td class="p-2 font-bold bg-slate-50">Abl.</td><td>milit-e / -i</td><td>milit-ibus</td><td>nomin-e / -i</td><td>nomin-ibus</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Verb -->
+                <div id="gsec-verb" class="hidden space-y-4">
+                    <div class="p-4 bg-amber-50 border-2 border-amber-200 rounded-2xl">
+                        <h4 class="font-bold text-amber-800 font-display">Desinencias Personales Activas</h4>
+                        <p class="text-sm text-amber-900 mt-1">Singular: <strong>-o/-m, -s, -t</strong> | Plural: <strong>-mus, -tis, -nt</strong></p>
+                    </div>
+                    <div class="p-4 bg-rose-50 border-2 border-rose-200 rounded-2xl">
+                        <h4 class="font-bold text-rose-800 font-display">Desinencias Personales Pasivas</h4>
+                        <p class="text-sm text-rose-900 mt-1">Singular: <strong>-or/-r, -ris, -tur</strong> | Plural: <strong>-mur, -mini, -ntur</strong></p>
+                    </div>
+                </div>
+
+                <!-- Section Sint -->
+                <div id="gsec-sint" class="hidden space-y-3">
+                    <div class="p-3 bg-purple-50 border rounded-xl"><strong class="text-purple-700">Nominativo:</strong> Sujeto y Atributo.</div>
+                    <div class="p-3 bg-blue-50 border rounded-xl"><strong class="text-blue-700">Acusativo:</strong> Objeto Directo (CD) y C. Lugar (¿Adónde?).</div>
+                    <div class="p-3 bg-amber-50 border rounded-xl"><strong class="text-amber-700">Genitivo:</strong> Posesión / Complemento del Nombre (CN).</div>
+                    <div class="p-3 bg-emerald-50 border rounded-xl"><strong class="text-emerald-700">Dativo:</strong> Objeto Indirecto (CI).</div>
+                    <div class="p-3 bg-rose-50 border rounded-xl"><strong class="text-rose-700">Ablativo:</strong> C. Circunstancial (Medio, Lugar, Causa, Compañía).</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 4. PERFIL Y LOGROS ================= -->
+        <section id="tab-perfil" class="hidden space-y-6 animate-pop-in">
+            <div class="bg-white rounded-3xl border-4 border-slate-200 p-6 shadow-md space-y-6">
+                <div class="flex items-center space-x-4 border-b-2 border-slate-100 pb-4">
+                    <div class="w-20 h-20 bg-gradient-to-tr from-roma-gold to-amber-500 rounded-full flex items-center justify-center text-4xl shadow-md border-4 border-white">
+                        🦁
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold font-display text-slate-900">Gladiador de Roma</h2>
+                        <p class="text-slate-500 text-sm">Nivel de estudiante: <span id="profile-rank" class="font-bold text-purple-600">Discipulus</span></p>
+                    </div>
+                </div>
+
+                <!-- Stats summary -->
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="bg-purple-50 border-2 border-purple-200 p-3 rounded-2xl">
+                        <span class="text-2xl font-display font-bold text-purple-700" id="profile-xp">0</span>
+                        <span class="text-xs text-purple-900 block font-semibold">Total XP</span>
+                    </div>
+                    <div class="bg-emerald-50 border-2 border-emerald-200 p-3 rounded-2xl">
+                        <span class="text-2xl font-display font-bold text-emerald-700" id="profile-completed">0</span>
+                        <span class="text-xs text-emerald-900 block font-semibold">Temas Hechos</span>
+                    </div>
+                    <div class="bg-amber-50 border-2 border-amber-200 p-3 rounded-2xl">
+                        <span class="text-2xl font-display font-bold text-amber-700" id="profile-streak">1</span>
+                        <span class="text-xs text-amber-900 block font-semibold">Días de Racha</span>
+                    </div>
+                </div>
+
+                <!-- Badges -->
+                <div>
+                    <h3 class="font-display font-bold text-slate-800 text-lg mb-3">Medallas e Insignias Imperiales</h3>
+                    <div id="profile-badges-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <!-- Badges -->
+                    </div>
+                </div>
+
+                <!-- Reset button -->
+                <div class="pt-4 border-t-2 border-slate-100 flex justify-end">
+                    <button onclick="resetAllProgress()" class="text-xs text-rose-500 font-bold hover:underline">
+                        Restablecer todo el progreso
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= THEORY / LESSON VIEW ================= -->
+        <section id="view-theory" class="hidden space-y-6 animate-pop-in">
+            <div class="flex items-center justify-between">
+                <button onclick="switchMainTab('historia')" class="btn-3d bg-slate-200 hover:bg-slate-300 text-slate-700 font-display font-bold px-4 py-2 rounded-2xl flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Volver
+                </button>
+                <span id="theory-topic-tag" class="bg-purple-100 text-purple-700 font-display font-bold px-3 py-1 rounded-full text-xs">
+                    Tema 1
+                </span>
+            </div>
+
+            <div class="bg-white border-4 border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div class="border-b-2 border-slate-100 pb-4 flex items-start gap-4">
+                    <div id="theory-icon" class="w-16 h-16 rounded-2xl bg-amber-400 text-white flex items-center justify-center text-3xl shadow-md shrink-0">
+                        📜
+                    </div>
+                    <div>
+                        <h2 id="theory-title" class="text-2xl sm:text-3xl font-display font-bold text-slate-900">
+                            Cargando...
+                        </h2>
+                        <p id="theory-subtitle" class="text-slate-500 text-sm mt-1">
+                            Aprende la teoría antes de comenzar la prueba.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="theory-content" class="prose max-w-none text-slate-700 space-y-4 text-base">
+                    <!-- Dynamic content -->
+                </div>
+
+                <div class="pt-4 border-t-2 border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 text-slate-500 text-xs sm:text-sm">
+                        <i class="fa-solid fa-shield-halved text-roma-green text-base"></i>
+                        <span>Examen interactivo con repaso integrado</span>
+                    </div>
+                    <button onclick="startQuizForCurrentTopic()" class="btn-3d w-full sm:w-auto bg-gradient-to-r from-roma-green to-emerald-500 hover:from-emerald-500 text-white font-display font-bold text-lg px-8 py-4 rounded-2xl shadow-[0_6px_0_#059669] flex items-center justify-center gap-2">
+                        <span>¡IR AL EXAMEN!</span>
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= EXERCISE / ARENA / QUIZ INTERACTIVE VIEW ================= -->
+        <section id="view-interactive-exercise" class="hidden space-y-6 animate-pop-in">
+            <!-- Header bar -->
+            <div class="flex items-center justify-between gap-4">
+                <button onclick="exitExerciseView()" class="text-slate-400 hover:text-slate-600 text-2xl p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <div class="flex-1 bg-slate-200 h-4 rounded-full overflow-hidden p-0.5 border border-slate-300">
+                    <div id="ex-progress-bar" class="bg-roma-gold h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                </div>
+
+                <span id="ex-counter" class="font-display font-bold text-slate-600 text-sm">1 / 5</span>
+            </div>
+
+            <!-- Dynamic Interactive Exercise Card -->
+            <div class="bg-white border-4 border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 relative">
+                
+                <!-- Mascot Banner -->
+                <div class="flex items-center gap-3 bg-amber-50 border-2 border-amber-200 p-3 rounded-2xl">
+                    <div class="text-3xl animate-bounce-subtle">🦉</div>
+                    <div>
+                        <span id="ex-tag-title" class="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-200 px-2 py-0.5 rounded-md">Práctica</span>
+                        <p id="ex-mascot-hint" class="text-xs sm:text-sm text-amber-900 font-medium">¡Concéntrate en la función gramatical!</p>
+                    </div>
+                </div>
+
+                <!-- Exercise Area Container -->
+                <div id="ex-dynamic-body" class="space-y-6">
+                    <!-- Dynamic rendering for declensions, sentence syntax builder, verb selector, multiple choice -->
+                </div>
+
+                <!-- Feedback Panel -->
+                <div id="ex-feedback-panel" class="hidden rounded-2xl p-4 space-y-2 border-2">
+                    <div class="flex items-center gap-3">
+                        <div id="ex-feedback-icon" class="text-2xl"></div>
+                        <h4 id="ex-feedback-title" class="font-display font-bold text-base sm:text-lg"></h4>
+                    </div>
+                    <p id="ex-feedback-explain" class="text-xs sm:text-sm font-medium"></p>
+                </div>
+
+                <!-- Bottom Button -->
+                <div>
+                    <button id="ex-action-btn" onclick="checkInteractiveExercise()" class="btn-3d w-full bg-roma-purple hover:bg-indigo-600 text-white font-display font-bold text-lg py-4 rounded-2xl shadow-[0_6px_0_#4c51bf]">
+                        COMPROBAR RESPUESTA
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= RESULTS VIEW ================= -->
+        <section id="view-results" class="hidden animate-pop-in space-y-6 text-center">
+            <div class="bg-white border-4 border-slate-200 rounded-3xl p-8 shadow-2xl space-y-6 max-w-lg mx-auto">
+                <div class="text-7xl animate-bounce-subtle">🏆</div>
+                <h2 id="results-title" class="text-3xl font-display font-bold text-slate-900">
+                    ¡VICTORIA ROMANA!
+                </h2>
+                <p id="results-subtitle" class="text-slate-600">
+                    Has completado el desafío con éxito.
+                </p>
+
+                <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-xs text-slate-400 block font-bold">PRECISIÓN</span>
+                        <span id="results-score-text" class="text-2xl font-display font-bold text-roma-green">100%</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-400 block font-bold">RECOMPENSA</span>
+                        <span id="results-xp-gained" class="text-2xl font-display font-bold text-amber-500">+50 XP</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <button id="results-continue-btn" class="btn-3d w-full bg-roma-green hover:bg-emerald-600 text-white font-display font-bold text-lg py-4 rounded-2xl shadow-[0_6px_0_#059669]">
+                        CONTINUAR
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto border-t-2 border-slate-200 bg-white py-4 text-center text-xs font-semibold text-slate-400">
+        Ludus Latinus • Basado en Lingua Latina I (Laura Lamata) • IES Pradolongo
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /* ================= 1. OFFICIAL HISTORY COURSE TOPICS DATA ================= */
+        const historyTopics = [
+            {
+                id: 1,
+                title: "Del Indoeuropeo a las Lenguas Romances",
+                icon: "🏛️",
+                region: "Roma",
+                subtitle: "El origen prehistórico de nuestro idioma.",
+                theoryHtml: `
+                    <p>El <strong>latín</strong> pertenece a la gran familia lingüística <strong>indoeuropea</strong>. Con la expansión del Imperio Romano, el latín desplazó a las lenguas autóctonas de la Península Ibérica (como el ibero, celta o tartesio), salvo al <strong>euskera</strong>.</p>
+                    <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 my-3">
+                        <h4 class="font-bold text-amber-900 font-display">Latín Culto vs. Latín Vulgar</h4>
+                        <p class="text-xs text-amber-800 mt-1">El <strong>latín vulgar</strong> (hablado por soldados, comerciantes y el pueblo) evolucionó con los siglos dando lugar a las <strong>Lenguas Romances</strong>: Castellano, Catalán, Gallego, Portugués, Francés, Italiano, Rumano, Occitano y Sardo.</p>
+                    </div>
+                `,
+                questions: [
+                    { type: 'mc', q: "¿De qué familia lingüística proviene el latín?", options: ["Semítica", "Indoeuropea", "Urálica", "Afroasiática"], correct: 1, explain: "El latín pertenece a la rama itálica de la familia indoeuropea." },
+                    { type: 'mc', q: "¿Qué variedad del latín dio origen al castellano?", options: ["Latín Culto", "Latín Eclesiástico", "Latín Vulgar", "Latín Poético"], correct: 2, explain: "El latín vulgar hablado fue el que evolucionó en las lenguas romances." },
+                    { type: 'mc', q: "¿Cuál de estas lenguas NO proviene del latín?", options: ["Catalán", "Gallego", "Euskera", "Francés"], correct: 2, explain: "El euskera es una lengua prerromana no indoeuropea." }
+                ]
+            },
+            {
+                id: 2,
+                title: "Alfabeto y Pronunciación Clásica",
+                icon: "🗣️",
+                region: "Lacio",
+                subtitle: "Pronuncia el latín de Cicerón y César.",
+                theoryHtml: `
+                    <p>En pronunciación clásica (restituida):</p>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li><strong>C y G:</strong> Suenan siempre duras (<em>Cicero</em> = "Kíkerō", <em>genus</em> = "guenus").</li>
+                        <li><strong>V:</strong> Suena como la semi-vocal /w/ (<em>veni</em> = "weni").</li>
+                        <li><strong>LL:</strong> Suena como dos L seguidas (doble L), no como 'y'.</li>
+                        <li><strong>Acentuación:</strong> NO hay palabras agudas. Las palabras son llanas o esdrújulas.</li>
+                    </ul>
+                `,
+                questions: [
+                    { type: 'mc', q: "En pronunciación clásica, ¿cómo se pronuncia 'Caesar'?", options: ["Sésar", "Káesar", "Chésar", "Zésar"], correct: 1, explain: "La 'C' suena siempre /k/ y 'ae' es diptongo." },
+                    { type: 'mc', q: "¿Existen palabras agudas en latín clásico?", options: ["Sí, muchas", "No, en latín no existen agudas", "Solo en verbos", "Solo en adjetivos"], correct: 1, explain: "En latín las palabras son únicamente llanas o esdrújulas." }
+                ]
+            },
+            {
+                id: 3,
+                title: "Concepto de Flexión y Casos",
+                icon: "🧩",
+                region: "Campania",
+                subtitle: "Nominativo, Vocativo, Acusativo, Genitivo, Dativo y Ablativo.",
+                theoryHtml: `
+                    <p>Declinar consiste en cambiar las terminaciones de un sustantivo según su función sintáctica:</p>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li><strong>Nominativo:</strong> Sujeto y Atributo.</li>
+                        <li><strong>Vocativo:</strong> Apelación directa.</li>
+                        <li><strong>Acusativo:</strong> Objeto Directo (CD) / C. Lugar (¿Adónde?).</li>
+                        <li><strong>Genitivo:</strong> Complemento del Nombre (CN - posesión).</li>
+                        <li><strong>Dativo:</strong> Objeto Indirecto (CI).</li>
+                        <li><strong>Ablativo:</strong> Complemento Circunstancial (CC).</li>
+                    </ul>
+                `,
+                questions: [
+                    { type: 'mc', q: "¿Qué caso marca el Sujeto de la oración?", options: ["Acusativo", "Genitivo", "Nominativo", "Ablativo"], correct: 2, explain: "El Nominativo es el caso del sujeto y atributo." },
+                    { type: 'mc', q: "Para expresar posesión ('El libro DE Marco'), usamos el caso:", options: ["Genitivo", "Dativo", "Acusativo", "Vocativo"], correct: 0, explain: "El Genitivo cumple la función de Complemento del Nombre." }
+                ]
+            },
+            {
+                id: 4,
+                title: "Primera y Segunda Declinación",
+                icon: "🌹",
+                region: "Etruria",
+                subtitle: "Modelos rosa, -ae / dominus, -i / templum, -i",
+                theoryHtml: `
+                    <p><strong>1ª Declinación (Nom. -a / Gen. -ae):</strong> Mayoría femeninos (<em>rosa, rosae</em>).</p>
+                    <p><strong>2ª Declinación (Nom. -us/-er/-um / Gen. -i):</strong> Masculinos en -us (<em>dominus</em>) y Neutros en -um (<em>templum</em>).</p>
+                    <p class="text-xs bg-amber-100 p-2 rounded border border-amber-300 font-bold mt-2">
+                        Regla de los neutros: Nom, Voc y Acus son idénticos, y en plural terminan siempre en -A.
+                    </p>
+                `,
+                questions: [
+                    { type: 'mc', q: "¿En qué letra terminan Nom/Voc/Acus plural de los NEUTROS?", options: ["-os", "-is", "-a", "-um"], correct: 2, explain: "Todos los neutros hacen su plural en '-a'." },
+                    { type: 'mc', q: "Genitivo Singular de la 1ª declinación:", options: ["-ae", "-i", "-is", "-us"], correct: 0, explain: "La 1ª declinación tiene Genitivo singular en '-ae'." }
+                ]
+            },
+            {
+                id: 5,
+                title: "Conjugaciones Verbales en Presente",
+                icon: "⚔️",
+                region: "Galia",
+                subtitle: "Desinencias activas: -o/-m, -s, -t, -mus, -tis, -nt.",
+                theoryHtml: `
+                    <p>Las 4 conjugaciones latinas principales:</p>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>1ª Conjugación (-are): <em>amo, amare</em></li>
+                        <li>2ª Conjugación (-ēre): <em>habeo, habēre</em></li>
+                        <li>3ª Conjugación (-ere): <em>lego, legere</em></li>
+                        <li>4ª Conjugación (-ire): <em>audio, audire</em></li>
+                    </ul>
+                `,
+                questions: [
+                    { type: 'mc', q: "¿Qué persona indica la desinencia '-mus'?", options: ["Tú", "Nosotros", "Vosotros", "Ellos"], correct: 1, explain: "'-mus' es la 1ª persona del plural (nosotros)." },
+                    { type: 'mc', q: "Traducción de 'audiunt':", options: ["Él oye", "Nosotros oímos", "Ellos oyen", "Oíd vos"], correct: 2, explain: "3ª persona plural del presente activo de 'audio'." }
+                ]
+            },
+            {
+                id: 6,
+                title: "Tercera Declinación",
+                icon: "🛡️",
+                region: "Hispania",
+                subtitle: "Temas en consonante y temas en -i (Gen. -is).",
+                theoryHtml: `
+                    <p>Su Genitivo singular es en <strong>-is</strong>. Se dividen en:</p>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li><strong>Imparisílabos (consonante):</strong> Distinto nº de sílabas (<em>miles, militis</em>).</li>
+                        <li><strong>Parisílabos (tema en -i):</strong> Mismo nº de sílabas (<em>civis, civis</em>).</li>
+                    </ul>
+                `,
+                questions: [
+                    { type: 'mc', q: "Dativo y Ablativo Plural de la 3ª Declinación:", options: ["-is", "-ibus", "-orum", "-ebus"], correct: 1, explain: "La 3ª declinación usa la terminación '-ibus'." }
+                ]
+            },
+            {
+                id: 7,
+                title: "4ª y 5ª Declinaciones",
+                icon: "⛺",
+                region: "Britania",
+                subtitle: "Exercitus (Gen. -us) y Res (Gen. -ei).",
+                theoryHtml: `
+                    <p><strong>4ª Declinación:</strong> Gen. Sing en <strong>-us</strong> (ej. <em>manus, manus</em>; <em>cornu, cornus</em>).</p>
+                    <p><strong>5ª Declinación:</strong> Gen. Sing en <strong>-ei</strong> (ej. <em>res, rei</em>; <em>dies, diei</em>).</p>
+                `,
+                questions: [
+                    { type: 'mc', q: "¿A qué declinación pertenece 'dies, diei'?", options: ["2ª Declinación", "3ª Declinación", "4ª Declinación", "5ª Declinación"], correct: 3, explain: "Genitivo singular en '-ei' corresponde a la 5ª declinación." }
+                ]
+            },
+            {
+                id: 8,
+                title: "Pronombres y Oraciones de Relativo",
+                icon: "👑",
+                region: "Roma Imperial",
+                subtitle: "Qui, Quae, Quod y demostrativos hic, ille, iste.",
+                theoryHtml: `
+                    <p>El pronombre relativo <strong>Qui, Quae, Quod</strong> introduce oraciones subordinadas de relativo y concuerda con su antecedente en género y número, pero toma el caso de su función en la subordinada.</p>
+                `,
+                questions: [
+                    { type: 'mc', q: "¿En qué concuerda el pronombre relativo con su antecedente?", options: ["En Caso y Género", "En Género y Número", "En Caso solamente", "En todo siempre"], correct: 1, explain: "El caso lo determina la función dentro de su propia oración." }
+                ]
+            }
+        ];
+
+
+        /* ================= 2. PRACTICE ARENA LEVELS & ROADMAP DATA ================= */
+        const arenaLevelsData = [
+            {
+                level: 1,
+                title: "Nivel 1: Base de Iniciación",
+                subtitle: "1ª Declinación & Verbo Sum / Presente Activo",
+                badgeReq: "Novicio",
+                color: "purple",
+                exercises: [
+                    {
+                        type: "table_fill",
+                        cat: "decl",
+                        title: "Completa la 1ª Declinación (rosa, -ae)",
+                        instructions: "Escribe la terminación o forma correcta:",
+                        wordBase: "ros-",
+                        inputs: [
+                            { label: "Nom. Sing.", target: "rosa" },
+                            { label: "Acus. Sing.", target: "rosam" },
+                            { label: "Gen. Sing.", target: "rosae" },
+                            { label: "Nom. Plur.", target: "rosae" },
+                            { label: "Acus. Plur.", target: "rosas" }
+                        ],
+                        explain: "1ª declinación: -a, -am, -ae, -ae, -as."
+                    },
+                    {
+                        type: "syntax_builder",
+                        cat: "sintaxis",
+                        title: "Análisis y Traducción Sintáctica",
+                        latinWords: ["Puella", "rosam", "videt"],
+                        spanishTranslation: "La niña ve la rosa",
+                        tagOptions: ["Sujeto", "CD", "Verbo", "CI", "CC"],
+                        correctTags: ["Sujeto", "CD", "Verbo"],
+                        explain: "Puella (Nom. Sujeto) + rosam (Acus. CD) + videt (Verbo)."
+                    },
+                    {
+                        type: "mc",
+                        cat: "verb",
+                        q: "¿Cuál es la 3ª persona del plural del presente del verbo SUM?",
+                        options: ["est", "sumus", "sunt", "estis"],
+                        correct: 2,
+                        explain: "Sum, es, est, sumus, estis, SUNT (Ellos son/están)."
+                    }
+                ]
+            },
+            {
+                level: 2,
+                title: "Nivel 2: Segunda Declinación & Adjetivos 1ª Clase",
+                subtitle: "Dominus, Templum y concordancia con bonus, bona, bonum",
+                badgeReq: "Legionario",
+                color: "blue",
+                exercises: [
+                    {
+                        type: "table_fill",
+                        cat: "decl",
+                        title: "Declinación Neutra 2ª (templum, -i)",
+                        instructions: "Rellena los casos clave del neutro:",
+                        wordBase: "templ-",
+                        inputs: [
+                            { label: "Nom. Sing.", target: "templum" },
+                            { label: "Acus. Sing.", target: "templum" },
+                            { label: "Nom. Plur.", target: "templa" },
+                            { label: "Acus. Plur.", target: "templa" }
+                        ],
+                        explain: "En neutros, Nom y Acus son iguales y terminan en -a en plural."
+                    },
+                    {
+                        type: "syntax_builder",
+                        cat: "sintaxis",
+                        title: "Análisis de Adjetivo y Sustantivo",
+                        latinWords: ["Dominus", "bonus", "servum", "vocat"],
+                        spanishTranslation: "El buen señor llama al siervo",
+                        tagOptions: ["Sujeto", "CN / Atrib", "CD", "Verbo"],
+                        correctTags: ["Sujeto", "CN / Atrib", "CD", "Verbo"],
+                        explain: "Dominus (Sujeto) bonus (Adj en Nom) servum (CD) vocat (Verbo)."
+                    },
+                    {
+                        type: "mc",
+                        cat: "adj",
+                        q: "¿Con qué forma concuerda 'puella' (femenino nominativo singular)?",
+                        options: ["bonus", "bona", "bonum", "bonos"],
+                        correct: 1,
+                        explain: "Puella es femenino nominativo singular, concuerda con 'bona'."
+                    }
+                ]
+            },
+            {
+                level: 3,
+                title: "Nivel 3: Tercera Declinación & Adjetivos 2ª Clase",
+                subtitle: "Sustantivos en consonante e -i (Miles, Civis) y Adj. omnis, omne",
+                badgeReq: "Centurión",
+                color: "emerald",
+                exercises: [
+                    {
+                        type: "table_fill",
+                        cat: "decl",
+                        title: "3ª Declinación Masculina (miles, militis)",
+                        instructions: "Rellena con la raíz milit-:",
+                        wordBase: "milit-",
+                        inputs: [
+                            { label: "Acus. Sing.", target: "militem" },
+                            { label: "Gen. Sing.", target: "militis" },
+                            { label: "Nom. Plur.", target: "milites" },
+                            { label: "Dat./Abl. Plur.", target: "militibus" }
+                        ],
+                        explain: "Desinencias 3ª decl: -em, -is, -es, -ibus."
+                    },
+                    {
+                        type: "syntax_builder",
+                        cat: "sintaxis",
+                        title: "Sintaxis con 3ª Declinación",
+                        latinWords: ["Miles", "urbem", "defendit"],
+                        spanishTranslation: "El soldado defiende la ciudad",
+                        tagOptions: ["Sujeto", "CD", "Verbo", "CC"],
+                        correctTags: ["Sujeto", "CD", "Verbo"],
+                        explain: "Miles (Nom. Sujeto) urbem (Acus. CD) defendit (Verbo)."
+                    }
+                ]
+            },
+            {
+                level: 4,
+                title: "Nivel 4: 4ª y 5ª Declinación & Tiempos de Perfecto",
+                subtitle: "Exercitus, Res, Pretérito Perfecto e Imperfecto (-ba-)",
+                badgeReq: "Tribuno",
+                color: "amber",
+                exercises: [
+                    {
+                        type: "mc",
+                        cat: "verb",
+                        q: "¿Qué tiempo verbal expresa 'amabat'?",
+                        options: ["Presente", "Pretérito Imperfecto", "Pretérito Perfecto", "Futuro"],
+                        correct: 1,
+                        explain: "La marca -ba- indica Pretérito Imperfecto de Indicativo."
+                    },
+                    {
+                        type: "syntax_builder",
+                        cat: "sintaxis",
+                        title: "Oración en Pasado con 4ª Declinación",
+                        latinWords: ["Exercitus", "hostes", "vicit"],
+                        spanishTranslation: "El ejército venció a los enemigos",
+                        tagOptions: ["Sujeto", "CD", "Verbo"],
+                        correctTags: ["Sujeto", "CD", "Verbo"],
+                        explain: "Exercitus (4ª decl. Nom) hostes (3ª decl. Acus) vicit (Perf. Verbo)."
+                    }
+                ]
+            },
+            {
+                level: 5,
+                title: "Nivel 5: Voz Pasiva, Pronombres y Relativo",
+                subtitle: "Amatur, docetur, demostrativos y oraciones con Qui, Quae, Quod",
+                badgeReq: "César",
+                color: "rose",
+                exercises: [
+                    {
+                        type: "mc",
+                        cat: "verb",
+                        q: "¿Qué desinencia marca la 3ª persona singular de la voz PASIVA?",
+                        options: ["-t", "-tur", "-nt", "-ntur"],
+                        correct: 1,
+                        explain: "La pasiva singular en 3ª persona finaliza en '-tur' (ej. amatur = es amado)."
+                    },
+                    {
+                        type: "syntax_builder",
+                        cat: "sintaxis",
+                        title: "Oración de Relativo",
+                        latinWords: ["Vir", "quem", "vides", "consul", "est"],
+                        spanishTranslation: "El hombre al que ves es cónsul",
+                        tagOptions: ["Sujeto", "CD Subord", "Verbo Sub", "Atributo", "Verbo Prin"],
+                        correctTags: ["Sujeto", "CD Subord", "Verbo Sub", "Atributo", "Verbo Prin"],
+                        explain: "Vir (Suj) quem (CD de vides) vides (V.Sub) consul (Atrib) est (V.Prin)."
+                    }
+                ]
+            },
+            {
+                level: 6,
+                title: "Nivel 6: Subordinadas de Infinitivo e Imperativo",
+                subtitle: "Oraciones completivas de Infinitivo y mandatos",
+                badgeReq: "Imperator",
+                color: "indigo",
+                exercises: [
+                    {
+                        type: "mc",
+                        cat: "verb",
+                        q: "En una oración de Infinitivo subordinada, ¿en qué caso va el sujeto del infinitivo?",
+                        options: ["Nominativo", "Acusativo", "Ablativo", "Genitivo"],
+                        correct: 1,
+                        explain: "Las subordinadas de infinitivo llevan su sujeto propio en ACUSATIVO."
+                    },
+                    {
+                        type: "syntax_builder",
+                        cat: "sintaxis",
+                        title: "Estructura de Infinitivo",
+                        latinWords: ["Dico", "te", "bonum", "esse"],
+                        spanishTranslation: "Digo que tú eres bueno",
+                        tagOptions: ["V.Principal", "Suj.Inf (Acus)", "Atrib.Inf", "Infinitivo"],
+                        correctTags: ["V.Principal", "Suj.Inf (Acus)", "Atrib.Inf", "Infinitivo"],
+                        explain: "Dico + te (Suj en Acusativo) bonum (Atributo) esse (Infinitivo)."
+                    }
+                ]
+            }
+        ];
+
+
+        /* ================= GAME STATE & LOCAL STORAGE persistance ================= */
+        let gameState = {
+            unlockedTopic: 1,
+            completedTopics: [],
+            arenaLevelUnlocked: 1,
+            arenaLevelsCompleted: [],
+            xp: 0,
+            hearts: 5,
+            streak: 1
+        };
+
+        const savedState = localStorage.getItem('ludus_latinus_v2');
+        if (savedState) {
+            try { gameState = { ...gameState, ...JSON.parse(savedState) }; } catch(e){}
+        }
+
+        function saveGameState() {
+            localStorage.setItem('ludus_latinus_v2', JSON.stringify(gameState));
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('stat-xp').textContent = gameState.xp;
+            document.getElementById('stat-hearts').textContent = gameState.hearts;
+            document.getElementById('stat-streak').textContent = gameState.streak;
+
+            document.getElementById('profile-xp').textContent = gameState.xp;
+            document.getElementById('profile-completed').textContent = gameState.completedTopics.length;
+            document.getElementById('profile-streak').textContent = gameState.streak;
+
+            // Map progress
+            const percent = Math.round((gameState.completedTopics.length / historyTopics.length) * 100);
+            document.getElementById('map-progress-bar').style.width = `${percent}%`;
+            document.getElementById('map-progress-text').textContent = `${percent}% Completado`;
+
+            renderBadges();
+        }
+
+        function resetAllProgress() {
+            if (confirm("¿Estás seguro de reiniciar todo tu progreso? Volverás al Nivel 1.")) {
+                localStorage.removeItem('ludus_latinus_v2');
+                location.reload();
+            }
+        }
+
+        /* ================= NAVIGATION SYSTEM ================= */
+        function switchMainTab(tabName) {
+            ['historia', 'practica', 'gramatica', 'perfil'].forEach(t => {
+                const sec = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`nav-tab-${t}`);
+                if (sec) sec.classList.add('hidden');
+                if (btn) {
+                    btn.classList.remove('border-roma-purple', 'text-roma-purple');
+                    btn.classList.add('border-transparent', 'text-slate-500');
+                }
+            });
+
+            // Hide overlay views
+            ['view-theory', 'view-interactive-exercise', 'view-results'].forEach(v => {
+                const el = document.getElementById(v);
+                if (el) el.classList.add('hidden');
+            });
+
+            const activeSec = document.getElementById(`tab-${tabName}`);
+            const activeBtn = document.getElementById(`nav-tab-${tabName}`);
+            if (activeSec) activeSec.classList.remove('hidden');
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-500');
+                activeBtn.classList.add('border-roma-purple', 'text-roma-purple');
+            }
+
+            if (tabName === 'historia') renderHistoryNodes();
+            if (tabName === 'practica') renderArenaRoadmap();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* ================= HISTORIA COURSE RENDER ================= */
+        function renderHistoryNodes() {
+            const container = document.getElementById('historia-nodes-container');
+            container.innerHTML = '';
+
+            historyTopics.forEach((topic) => {
+                const isUnlocked = topic.id <= gameState.unlockedTopic;
+                const isCompleted = gameState.completedTopics.includes(topic.id);
+
+                const wrapper = document.createElement('div');
+                wrapper.className = "flex flex-col items-center w-full max-w-md relative";
+
+                const btn = document.createElement('button');
+                btn.onclick = () => { if (isUnlocked) openTopicTheory(topic.id); };
+
+                let btnStyle = isCompleted
+                    ? "bg-gradient-to-tr from-emerald-500 to-roma-green text-white border-emerald-600 shadow-[0_6px_0_#047857]"
+                    : isUnlocked
+                    ? "bg-gradient-to-tr from-amber-400 to-roma-gold text-slate-900 border-amber-500 shadow-[0_6px_0_#d97706] animate-bounce-subtle"
+                    : "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-80 shadow-[0_4px_0_#cbd5e1]";
+
+                btn.className = `btn-3d w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-4 flex flex-col items-center justify-center text-3xl sm:text-4xl transition relative z-10 ${btnStyle}`;
+                btn.innerHTML = `
+                    <span>${isUnlocked ? topic.icon : '🔒'}</span>
+                    ${isCompleted ? '<span class="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs p-1 rounded-full border-2 border-white"><i class="fa-solid fa-check"></i></span>' : ''}
+                `;
+
+                const label = document.createElement('div');
+                label.className = `mt-3 text-center px-4 py-2 rounded-2xl border-2 text-xs sm:text-sm font-display font-bold max-w-xs ${
+                    isUnlocked ? 'bg-white border-slate-200 text-slate-800 shadow-sm' : 'bg-slate-100 border-slate-200 text-slate-400'
+                }`;
+                label.innerHTML = `
+                    <span class="text-[10px] uppercase text-purple-600 block">Tema ${topic.id} • ${topic.region}</span>
+                    <span>${topic.title}</span>
+                `;
+
+                wrapper.appendChild(btn);
+                wrapper.appendChild(label);
+                container.appendChild(wrapper);
+            });
+        }
+
+        function openTopicTheory(topicId) {
+            currentHistoryTopicId = topicId;
+            const topic = historyTopics.find(t => t.id === topicId);
+            if (!topic) return;
+
+            document.getElementById('theory-topic-tag').textContent = `Tema ${topic.id} de ${historyTopics.length}`;
+            document.getElementById('theory-icon').textContent = topic.icon;
+            document.getElementById('theory-title').textContent = topic.title;
+            document.getElementById('theory-subtitle').textContent = topic.subtitle;
+            document.getElementById('theory-content').innerHTML = topic.theoryHtml;
+
+            // Show view
+            ['historia', 'practica', 'gramatica', 'perfil'].forEach(t => document.getElementById(`tab-${t}`).classList.add('hidden'));
+            document.getElementById('view-theory').classList.remove('hidden');
+        }
+
+        /* ================= ARENA / CAMINO DE PRÁCTICA RENDER ================= */
+        let activeArenaCategory = 'all';
+
+        function setArenaCategory(cat) {
+            activeArenaCategory = cat;
+            ['all', 'decl', 'adj', 'verb', 'sintaxis'].forEach(c => {
+                const btn = document.getElementById(`cat-btn-${c}`);
+                if (btn) {
+                    if (c === cat) {
+                        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold font-display bg-slate-900 text-white shadow";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold font-display bg-white/80 text-slate-800 hover:bg-white";
+                    }
+                }
+            });
+            renderArenaRoadmap();
+        }
+
+        function renderArenaRoadmap() {
+            const container = document.getElementById('arena-levels-container');
+            container.innerHTML = '';
+
+            arenaLevelsData.forEach(levelObj => {
+                const isUnlocked = levelObj.level <= gameState.arenaLevelUnlocked;
+                const isCompleted = gameState.arenaLevelsCompleted.includes(levelObj.level);
+
+                // Filter exercises if category selected
+                const filteredExercises = activeArenaCategory === 'all' 
+                    ? levelObj.exercises 
+                    : levelObj.exercises.filter(ex => ex.cat === activeArenaCategory);
+
+                if (activeArenaCategory !== 'all' && filteredExercises.length === 0) {
+                    return; // skip empty level for specific filter
+                }
+
+                const card = document.createElement('div');
+                card.className = `p-6 rounded-3xl border-4 transition relative ${
+                    isCompleted 
+                        ? 'bg-emerald-50/60 border-emerald-300' 
+                        : isUnlocked 
+                        ? 'bg-white border-slate-200 shadow-md' 
+                        : 'bg-slate-100 border-slate-200 opacity-60'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-display font-bold ${
+                                isCompleted ? 'bg-emerald-500 text-white' : isUnlocked ? 'bg-amber-400 text-slate-900' : 'bg-slate-300 text-slate-500'
+                            }">
+                                ${isCompleted ? '✓' : levelObj.level}
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold uppercase text-amber-600 bg-amber-100 px-2 py-0.5 rounded-md">
+                                    Nivel de Dificultad ${levelObj.level}
+                                </span>
+                                <h4 class="text-lg font-display font-bold text-slate-900 mt-1">${levelObj.title}</h4>
+                                <p class="text-xs text-slate-500">${levelObj.subtitle}</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            ${isUnlocked ? `
+                                <button onclick="startArenaLevel(${levelObj.level})" class="btn-3d px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-900 font-display font-bold text-sm rounded-2xl shadow-[0_4px_0_#d97706] flex items-center gap-2">
+                                    <span>${isCompleted ? 'Volver a Practicar' : '¡Iniciar Nivel!'}</span>
+                                    <i class="fa-solid fa-play text-xs"></i>
+                                </button>
+                            ` : `
+                                <span class="text-xs font-bold text-slate-400 bg-slate-200 px-4 py-2 rounded-xl border flex items-center gap-2">
+                                    <i class="fa-solid fa-lock"></i> Bloqueado
+                                </span>
+                            `}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        /* ================= INTERACTIVE EXERCISE ENGINE ================= */
+        let currentExerciseQueue = [];
+        let currentExerciseIdx = 0;
+        let exerciseScore = 0;
+        let isCurrentExAnswered = false;
+        let isArenaMode = false;
+        let activeLevelNumber = 1;
+        let currentHistoryTopicId = 1;
+
+        function startQuizForCurrentTopic() {
+            isArenaMode = false;
+            const topic = historyTopics.find(t => t.id === currentHistoryTopicId);
+            if (!topic) return;
+
+            currentExerciseQueue = topic.questions.map(q => ({
+                ...q,
+                mascotHint: `Evaluación de ${topic.title}`
+            }));
+
+            currentExerciseIdx = 0;
+            exerciseScore = 0;
+            
+            showExerciseView();
+            renderInteractiveExercise();
+        }
+
+        function startArenaLevel(levelNum) {
+            isArenaMode = true;
+            activeLevelNumber = levelNum;
+            const lData = arenaLevelsData.find(l => l.level === levelNum);
+            if (!lData) return;
+
+            currentExerciseQueue = lData.exercises.map(ex => ({
+                ...ex,
+                mascotHint: lData.subtitle
+            }));
+
+            currentExerciseIdx = 0;
+            exerciseScore = 0;
+
+            showExerciseView();
+            renderInteractiveExercise();
+        }
+
+        function showExerciseView() {
+            ['historia', 'practica', 'gramatica', 'perfil', 'view-theory', 'view-results'].forEach(v => {
+                const el = document.getElementById(v) || document.getElementById(`tab-${v}`);
+                if (el) el.classList.add('hidden');
+            });
+            document.getElementById('view-interactive-exercise').classList.remove('hidden');
+        }
+
+        function exitExerciseView() {
+            if (isArenaMode) switchMainTab('practica');
+            else switchMainTab('historia');
+        }
+
+        function renderInteractiveExercise() {
+            isCurrentExAnswered = false;
+            const ex = currentExerciseQueue[currentExerciseIdx];
+
+            // Update Progress Bar & Counter
+            const percent = Math.round((currentExerciseIdx / currentExerciseQueue.length) * 100);
+            document.getElementById('ex-progress-bar').style.width = `${percent}%`;
+            document.getElementById('ex-counter').textContent = `${currentExerciseIdx + 1} / ${currentExerciseQueue.length}`;
+            document.getElementById('ex-mascot-hint').textContent = ex.mascotHint || "¡Responde con cuidado!";
+
+            // Hide feedback
+            const fb = document.getElementById('ex-feedback-panel');
+            fb.classList.add('hidden');
+
+            const actionBtn = document.getElementById('ex-action-btn');
+            actionBtn.textContent = "COMPROBAR RESPUESTA";
+            actionBtn.className = "btn-3d w-full bg-roma-purple hover:bg-indigo-600 text-white font-display font-bold text-lg py-4 rounded-2xl shadow-[0_6px_0_#4c51bf]";
+
+            const body = document.getElementById('ex-dynamic-body');
+            body.innerHTML = '';
+
+            // RENDER EXERCISE BASED ON TYPE
+            if (ex.type === 'mc') {
+                renderMultipleChoice(body, ex);
+            } else if (ex.type === 'table_fill') {
+                renderTableFill(body, ex);
+            } else if (ex.type === 'syntax_builder') {
+                renderSyntaxBuilder(body, ex);
+            }
+        }
+
+        /* TYPE 1: MULTIPLE CHOICE */
+        let selectedMCOption = null;
+        function renderMultipleChoice(container, ex) {
+            selectedMCOption = null;
+
+            const title = document.createElement('h3');
+            title.className = "text-xl font-display font-bold text-slate-900";
+            title.textContent = ex.q;
+            container.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-3";
+
+            ex.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `mc-opt-${idx}`;
+                btn.onclick = () => {
+                    if (isCurrentExAnswered) return;
+                    selectedMCOption = idx;
+                    ex.options.forEach((_, oI) => {
+                        const b = document.getElementById(`mc-opt-${oI}`);
+                        b.className = oI === idx 
+                            ? "w-full text-left p-4 rounded-2xl border-4 border-roma-purple bg-purple-50 font-bold text-purple-900 flex justify-between items-center shadow-md"
+                            : "w-full text-left p-4 rounded-2xl border-2 border-slate-200 bg-white text-slate-800 hover:border-slate-300 flex justify-between items-center opacity-80";
+                    });
+                };
+                btn.className = "w-full text-left p-4 rounded-2xl border-2 border-slate-200 bg-white text-slate-800 hover:border-slate-300 font-medium flex justify-between items-center shadow-sm";
+                btn.innerHTML = `<span>${opt}</span><span class="text-xs text-slate-400 font-bold">${String.fromCharCode(65 + idx)}</span>`;
+                grid.appendChild(btn);
+            });
+
+            container.appendChild(grid);
+        }
+
+        /* TYPE 2: TABLE FILL IN THE BLANKS */
+        function renderTableFill(container, ex) {
+            const h = document.createElement('div');
+            h.innerHTML = `
+                <h3 class="text-xl font-display font-bold text-slate-900">${ex.title}</h3>
+                <p class="text-xs text-slate-500 mt-1">${ex.instructions}</p>
+            `;
+            container.appendChild(h);
+
+            const card = document.createElement('div');
+            card.className = "bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl space-y-3";
+
+            ex.inputs.forEach((inp, idx) => {
+                const row = document.createElement('div');
+                row.className = "flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2";
+                row.innerHTML = `
+                    <label class="text-xs font-bold text-slate-700 font-display">${inp.label}</label>
+                    <div class="flex items-center gap-1 font-mono text-sm">
+                        <span class="text-slate-400 font-bold">${ex.wordBase}</span>
+                        <input type="text" id="table-inp-${idx}" class="w-32 p-2 border-2 border-slate-300 rounded-xl font-bold text-purple-700 focus:border-purple-500 focus:outline-none" placeholder="escribe...">
+                    </div>
+                `;
+                card.appendChild(row);
+            });
+
+            container.appendChild(card);
+        }
+
+        /* TYPE 3: SYNTAX BUILDER & PARSER */
+        let currentSentenceTags = [];
+        function renderSyntaxBuilder(container, ex) {
+            currentSentenceTags = new Array(ex.latinWords.length).fill(null);
+
+            const h = document.createElement('div');
+            h.innerHTML = `
+                <h3 class="text-xl font-display font-bold text-slate-900">${ex.title}</h3>
+                <p class="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl inline-block mt-2">
+                    Traducción: "${ex.spanishTranslation}"
+                </p>
+                <p class="text-xs text-slate-500 mt-2">Asigna la etiqueta gramatical correspondiente a cada palabra latina:</p>
+            `;
+            container.appendChild(h);
+
+            // Words grid with drop tag target
+            const wordsContainer = document.createElement('div');
+            wordsContainer.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 my-4";
+
+            ex.latinWords.forEach((word, wIdx) => {
+                const wordBox = document.createElement('div');
+                wordBox.className = "p-4 bg-white border-2 border-slate-200 rounded-2xl flex flex-col items-center justify-center space-y-2 shadow-sm";
+                wordBox.innerHTML = `
+                    <span class="text-lg font-display font-bold text-slate-900">${word}</span>
+                    <div id="word-tag-slot-${wIdx}" class="tag-slot w-full bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl p-1 text-center text-xs font-bold text-purple-700 flex items-center justify-center">
+                        Selecciona Etiqueta
+                    </div>
+                `;
+                wordsContainer.appendChild(wordBox);
+            });
+            container.appendChild(wordsContainer);
+
+            // Available Tags Buttons
+            const tagsBox = document.createElement('div');
+            tagsBox.className = "p-4 bg-purple-50 border-2 border-purple-200 rounded-2xl space-y-2";
+            tagsBox.innerHTML = `<span class="text-xs font-bold text-purple-900 block">Etiquetas Sintácticas Disponibles:</span>`;
+
+            const tagsFlex = document.createElement('div');
+            tagsFlex.className = "flex flex-wrap gap-2";
+
+            ex.tagOptions.forEach((tag) => {
+                const tagBtn = document.createElement('button');
+                tagBtn.className = "px-3 py-2 bg-white border-2 border-purple-300 hover:bg-purple-600 hover:text-white rounded-xl text-xs font-bold font-display text-purple-700 shadow-sm transition";
+                tagBtn.textContent = tag;
+                tagBtn.onclick = () => assignTagToFirstEmptySlot(tag, ex.latinWords.length);
+                tagsFlex.appendChild(tagBtn);
+            });
+
+            tagsBox.appendChild(tagsFlex);
+            container.appendChild(tagsBox);
+        }
+
+        function assignTagToFirstEmptySlot(tag, totalWords) {
+            if (isCurrentExAnswered) return;
+            // Find first empty slot
+            const emptyIdx = currentSentenceTags.findIndex(t => t === null);
+            if (emptyIdx !== -1) {
+                currentSentenceTags[emptyIdx] = tag;
+                const slot = document.getElementById(`word-tag-slot-${emptyIdx}`);
+                slot.textContent = tag;
+                slot.className = "tag-slot w-full bg-purple-100 border-2 border-purple-400 rounded-xl p-1 text-center text-xs font-bold text-purple-900 flex items-center justify-center shadow-inner";
+            }
+        }
+
+
+        /* ================= CHECK EXERCISE ANSWER ================= */
+        function checkInteractiveExercise() {
+            if (isCurrentExAnswered) {
+                // Advance
+                currentExerciseIdx++;
+                if (currentExerciseIdx < currentExerciseQueue.length) {
+                    renderInteractiveExercise();
+                } else {
+                    finishInteractiveModule();
+                }
+                return;
+            }
+
+            const ex = currentExerciseQueue[currentExerciseIdx];
+            let isCorrect = false;
+            let explanation = ex.explain || "";
+
+            if (ex.type === 'mc') {
+                if (selectedMCOption === null) return;
+                isCorrect = selectedMCOption === ex.correct;
+            } else if (ex.type === 'table_fill') {
+                isCorrect = true;
+                ex.inputs.forEach((inp, idx) => {
+                    const val = (document.getElementById(`table-inp-${idx}`).value || "").trim().toLowerCase();
+                    if (val !== inp.target.toLowerCase()) {
+                        isCorrect = false;
+                    }
+                });
+            } else if (ex.type === 'syntax_builder') {
+                isCorrect = JSON.stringify(currentSentenceTags) === JSON.stringify(ex.correctTags);
+            }
+
+            isCurrentExAnswered = true;
+
+            const fbPanel = document.getElementById('ex-feedback-panel');
+            const fbIcon = document.getElementById('ex-feedback-icon');
+            const fbTitle = document.getElementById('ex-feedback-title');
+            const fbExplain = document.getElementById('ex-feedback-explain');
+
+            fbPanel.classList.remove('hidden');
+
+            if (isCorrect) {
+                exerciseScore++;
+                fbPanel.className = "rounded-2xl p-4 space-y-2 border-2 bg-emerald-50 border-emerald-300 text-emerald-900";
+                fbIcon.innerHTML = "🎉";
+                fbTitle.textContent = "¡CORRECTO! +15 XP";
+                fbExplain.textContent = explanation;
+
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
+                }
+            } else {
+                fbPanel.className = "rounded-2xl p-4 space-y-2 border-2 bg-rose-50 border-rose-300 text-rose-900";
+                fbIcon.innerHTML = "❌";
+                fbTitle.textContent = "¡CASI! Revisa el análisis:";
+                fbExplain.textContent = explanation;
+
+                if (gameState.hearts > 1) {
+                    gameState.hearts--;
+                    saveGameState();
+                }
+            }
+
+            const actionBtn = document.getElementById('ex-action-btn');
+            actionBtn.textContent = currentExerciseIdx + 1 < currentExerciseQueue.length ? "SIGUIENTE PREGUNTA ➔" : "VER RESULTADOS FINAL ➔";
+            actionBtn.className = "btn-3d w-full bg-roma-green hover:bg-emerald-600 text-white font-display font-bold text-lg py-4 rounded-2xl shadow-[0_6px_0_#059669]";
+        }
+
+        /* ================= MODULE FINISH ================= */
+        function finishInteractiveModule() {
+            const total = currentExerciseQueue.length;
+            const percent = Math.round((exerciseScore / total) * 100);
+            const passed = percent >= 50;
+
+            if (passed) {
+                const xpEarned = 50 + (exerciseScore * 10);
+                gameState.xp += xpEarned;
+
+                if (isArenaMode) {
+                    if (!gameState.arenaLevelsCompleted.includes(activeLevelNumber)) {
+                        gameState.arenaLevelsCompleted.push(activeLevelNumber);
+                    }
+                    if (activeLevelNumber >= gameState.arenaLevelUnlocked && gameState.arenaLevelUnlocked < arenaLevelsData.length) {
+                        gameState.arenaLevelUnlocked = activeLevelNumber + 1;
+                    }
+                } else {
+                    if (!gameState.completedTopics.includes(currentHistoryTopicId)) {
+                        gameState.completedTopics.push(currentHistoryTopicId);
+                    }
+                    if (currentHistoryTopicId >= gameState.unlockedTopic && gameState.unlockedTopic < historyTopics.length) {
+                        gameState.unlockedTopic = currentHistoryTopicId + 1;
+                    }
+                }
+
+                saveGameState();
+
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } });
+                }
+
+                document.getElementById('results-title').textContent = "¡VICTORIA ROMANA!";
+                document.getElementById('results-subtitle').textContent = "Has demostrado gran dominio de la gramática y sintaxis latina.";
+                document.getElementById('results-score-text').textContent = `${percent}%`;
+                document.getElementById('results-xp-gained').textContent = `+${xpEarned} XP`;
+
+                const continueBtn = document.getElementById('results-continue-btn');
+                continueBtn.textContent = "VOLVER AL CAMINO";
+                continueBtn.onclick = () => exitExerciseView();
+
+            } else {
+                document.getElementById('results-title').textContent = "¡INTÉNTALO DE NUEVO!";
+                document.getElementById('results-subtitle').textContent = `Obtuviste un ${percent}%. Repasa las reglas gramaticales e inténtalo una vez más.`;
+                document.getElementById('results-score-text').textContent = `${percent}%`;
+                document.getElementById('results-xp-gained').textContent = `+0 XP`;
+
+                const continueBtn = document.getElementById('results-continue-btn');
+                continueBtn.textContent = "REPETIR NIVEL";
+                continueBtn.onclick = () => {
+                    if (isArenaMode) startArenaLevel(activeLevelNumber);
+                    else startQuizForCurrentTopic();
+                };
+            }
+
+            document.getElementById('view-interactive-exercise').classList.add('hidden');
+            document.getElementById('view-results').classList.remove('hidden');
+        }
+
+        /* ================= GRAMMAR SECTION TABS ================= */
+        function showGrammarSection(sec) {
+            ['decl', 'verb', 'sint'].forEach(s => {
+                const el = document.getElementById(`gsec-${s}`);
+                const btn = document.getElementById(`gtab-${s}`);
+                if (el) el.classList.add('hidden');
+                if (btn) {
+                    btn.classList.remove('border-roma-purple', 'text-roma-purple');
+                    btn.classList.add('border-transparent', 'text-slate-400');
+                }
+            });
+
+            const activeEl = document.getElementById(`gsec-${sec}`);
+            const activeBtn = document.getElementById(`gtab-${sec}`);
+            if (activeEl) activeEl.classList.remove('hidden');
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-400');
+                activeBtn.classList.add('border-roma-purple', 'text-roma-purple');
+            }
+        }
+
+        function renderBadges() {
+            const container = document.getElementById('profile-badges-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const badges = [
+                { title: "Primer Paso", icon: "🌱", req: 1 },
+                { title: "Gladiador", icon: "🛡️", req: 3 },
+                { title: "Centurión", icon: "⚔️", req: 5 },
+                { title: "César Máximo", icon: "👑", req: 8 }
+            ];
+
+            badges.forEach(b => {
+                const earned = gameState.completedTopics.length >= b.req;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border-2 text-center flex flex-col items-center justify-center ${
+                    earned ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-slate-100 border-slate-200 text-slate-400 opacity-60'
+                }`;
+                card.innerHTML = `
+                    <div class="text-3xl mb-1">${b.icon}</div>
+                    <span class="font-display font-bold text-xs">${b.title}</span>
+                    <span class="text-[10px] mt-0.5">${earned ? '¡Desbloqueado!' : `${b.req} temas`}</span>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Initialize application on load
+        window.onload = function() {
+            renderHistoryNodes();
+            renderArenaRoadmap();
+            updateHUD();
+        };
+    </script>
+</body>
+</html>
