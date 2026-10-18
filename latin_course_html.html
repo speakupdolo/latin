@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUDUS LATINUS - ¡Aprende Latín Jugando!</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        roma: {
+                            gold: '#FFC837',
+                            crimson: '#FF3366',
+                            purple: '#6C5CE7',
+                            green: '#00B894',
+                            blue: '#0984E3',
+                            bg: '#F7F9FC',
+                            darkBg: '#1A1D24'
+                        }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Outfit', 'sans-serif'],
+                    },
+                    keyframes: {
+                        bounceLittle: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' }
+                        },
+                        popIn: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
+                    },
+                    animation: {
+                        'bounce-subtle': 'bounceLittle 2s infinite',
+                        'pop-in': 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+        .btn-3d {
+            transition: all 0.1s ease;
+            box-shadow: 0 5px 0 linear-gradient(to right, rgba(0,0,0,0.2), rgba(0,0,0,0.2));
+        }
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2) !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #FFC837;
+            border-radius: 10px;
+        }
+        .map-line {
+            stroke-dasharray: 8;
+            animation: dash 20s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: -100; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col selection:bg-roma-gold selection:text-slate-900">
+
+    <!-- Top Navigation / Gamification Bar -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b-4 border-slate-200 shadow-sm py-2 px-4 sm:px-8">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            
+            <!-- Logo / Brand -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="showView('map')">
+                <div class="w-12 h-12 bg-gradient-to-tr from-roma-crimson to-amber-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg transform hover:rotate-6 transition">
+                    <i class="fa-solid fa-helmet-safety"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-roma-crimson via-roma-purple to-roma-blue bg-clip-text text-transparent">
+                        LUDUS LATINUS
+                    </h1>
+                    <p class="text-xs font-semibold text-slate-400 hidden sm:block">¡El Imperio del Latín!</p>
+                </div>
+            </div>
+
+            <!-- Stats HUD (XP, Lives, Streak) -->
+            <div class="flex items-center space-x-2 sm:space-x-5">
+                <!-- Streak -->
+                <div class="flex items-center bg-amber-100 border-2 border-amber-300 px-3 py-1.5 rounded-2xl font-display font-bold text-amber-700 text-sm sm:text-base">
+                    <i class="fa-solid fa-fire text-amber-500 text-lg mr-1.5 animate-bounce-subtle"></i>
+                    <span id="stat-streak">1</span>
+                </div>
+
+                <!-- XP -->
+                <div class="flex items-center bg-purple-100 border-2 border-purple-300 px-3 py-1.5 rounded-2xl font-display font-bold text-purple-700 text-sm sm:text-base">
+                    <i class="fa-solid fa-star text-roma-gold text-lg mr-1.5 animate-spin-slow"></i>
+                    <span id="stat-xp">0</span> <span class="text-xs ml-1 font-normal opacity-80">XP</span>
+                </div>
+
+                <!-- Hearts/Lives -->
+                <div class="flex items-center bg-rose-100 border-2 border-rose-300 px-3 py-1.5 rounded-2xl font-display font-bold text-rose-600 text-sm sm:text-base">
+                    <i class="fa-solid fa-heart text-rose-500 text-lg mr-1.5"></i>
+                    <span id="stat-hearts">5</span>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Dynamic View Wrapper -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col">
+
+        <!-- ================= MAP / WORLD VIEW ================= -->
+        <section id="view-map" class="space-y-6 animate-pop-in">
+            
+            <!-- Hero Mascot Banner -->
+            <div class="bg-gradient-to-r from-roma-purple via-indigo-600 to-roma-blue rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute -right-8 -bottom-8 opacity-10 text-9xl font-black">SPQR</div>
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 bg-white/20 backdrop-blur border-4 border-white/40 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-inner animate-bounce-subtle">
+                            🦉
+                        </div>
+                        <div>
+                            <span class="bg-roma-gold text-slate-900 font-display text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Mascota Oficial</span>
+                            <h2 class="text-2xl sm:text-3xl font-bold font-display mt-1">¡Salve, recluta!</h2>
+                            <p class="text-slate-100 text-sm sm:text-base max-w-md mt-1">
+                                Soy <strong>Tito Cicerón</strong>. Acompáñame en esta conquista romana aprendiendo latín paso a paso.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="w-full sm:w-auto flex flex-col gap-2">
+                        <div class="bg-white/10 border border-white/20 p-3 rounded-2xl text-center">
+                            <span class="text-xs text-slate-200 block">Progreso de la Conquista</span>
+                            <div class="w-full bg-black/20 h-4 rounded-full mt-1 overflow-hidden p-0.5 border border-white/20">
+                                <div id="map-progress-bar" class="bg-roma-gold h-full rounded-full transition-all duration-500" style="width: 10%;"></div>
+                            </div>
+                            <span id="map-progress-text" class="text-xs font-bold font-display mt-1 inline-block">10% Completado</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Campaign Map -->
+            <div class="bg-white rounded-3xl border-4 border-slate-200 p-6 sm:p-10 shadow-lg relative">
+                <h3 class="text-xl font-bold font-display text-slate-800 text-center mb-8 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-map-location-dot text-roma-crimson"></i>
+                    CAMPAÑA DE CONQUESTA ROMANA
+                </h3>
+
+                <!-- Level Path Nodes -->
+                <div id="level-nodes-container" class="relative z-10 flex flex-col items-center space-y-8 sm:space-y-10">
+                    <!-- Nodes injected dynamically -->
+                </div>
+            </div>
+
+            <!-- Badges & Trophies Section -->
+            <div class="bg-white rounded-3xl border-4 border-slate-200 p-6 shadow-md">
+                <h3 class="font-display font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-award text-amber-500 text-xl"></i> Tus Logros Romanos
+                </h3>
+                <div id="badges-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <!-- Badges injected -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================= THEORY / LESSON VIEW ================= -->
+        <section id="view-theory" class="hidden space-y-6 animate-pop-in">
+            
+            <!-- Navigation Header -->
+            <div class="flex items-center justify-between">
+                <button onclick="showView('map')" class="btn-3d bg-slate-200 hover:bg-slate-300 text-slate-700 font-display font-bold px-4 py-2 rounded-2xl flex items-center gap-2 shadow-[0_4px_0_#cbd5e1]">
+                    <i class="fa-solid fa-arrow-left"></i> Volver al Mapa
+                </button>
+                <span id="theory-topic-tag" class="bg-purple-100 text-purple-700 font-display font-bold px-3 py-1 rounded-full text-xs sm:text-sm">
+                    Tema 1
+                </span>
+            </div>
+
+            <!-- Main Theory Card -->
+            <div class="bg-white border-4 border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                
+                <!-- Lesson Header -->
+                <div class="border-b-2 border-slate-100 pb-4 flex items-start gap-4">
+                    <div id="theory-icon" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-roma-gold text-white flex items-center justify-center text-3xl shadow-md shrink-0">
+                        📜
+                    </div>
+                    <div>
+                        <h2 id="theory-title" class="text-2xl sm:text-3xl font-display font-bold text-slate-900">
+                            Cargando Tema...
+                        </h2>
+                        <p id="theory-subtitle" class="text-slate-500 text-sm mt-1">
+                            Aprende los conceptos clave antes del desafío.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Theory Dynamic Content Body -->
+                <div id="theory-content" class="prose max-w-none text-slate-700 space-y-4 text-base sm:text-lg">
+                    <!-- Content injected -->
+                </div>
+
+                <!-- Action Button: Start Quiz -->
+                <div class="pt-4 border-t-2 border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 text-slate-500 text-sm">
+                        <i class="fa-solid fa-shield-halved text-roma-green text-lg"></i>
+                        <span>Examen interactivo con preguntas intercaladas de repaso</span>
+                    </div>
+                    <button onclick="startQuizForCurrentTopic()" class="btn-3d w-full sm:w-auto bg-gradient-to-r from-roma-green to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white font-display font-bold text-lg px-8 py-4 rounded-2xl shadow-[0_6px_0_#059669] flex items-center justify-center gap-3">
+                        <span>¡IR AL DESAFÍO!</span>
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= QUIZ / GAMEPLAY VIEW ================= -->
+        <section id="view-quiz" class="hidden space-y-6 animate-pop-in">
+            
+            <!-- Quiz Header Bar -->
+            <div class="flex items-center justify-between gap-4">
+                <button onclick="showView('theory')" class="text-slate-400 hover:text-slate-600 text-2xl p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <!-- Progress bar -->
+                <div class="flex-1 bg-slate-200 h-4 rounded-full overflow-hidden p-0.5 border border-slate-300">
+                    <div id="quiz-progress-bar" class="bg-roma-gold h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                </div>
+
+                <!-- Question Counter -->
+                <span id="quiz-question-counter" class="font-display font-bold text-slate-600 text-sm">
+                    1 / 5
+                </span>
+            </div>
+
+            <!-- Quiz Card -->
+            <div class="bg-white border-4 border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 relative">
+                
+                <!-- Mascot Hint Bubble -->
+                <div class="flex items-center gap-3 bg-amber-50 border-2 border-amber-200 p-3.5 rounded-2xl">
+                    <div class="text-3xl animate-bounce-subtle">🦉</div>
+                    <div>
+                        <span id="quiz-tag-origin" class="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-200/80 px-2 py-0.5 rounded-md">Tema Actual</span>
+                        <p id="quiz-mascot-text" class="text-xs sm:text-sm text-amber-900 font-medium">¡Lee con atención cada opción antes de elegir!</p>
+                    </div>
+                </div>
+
+                <!-- Question Title -->
+                <h3 id="quiz-question-title" class="text-xl sm:text-2xl font-display font-bold text-slate-900">
+                    ¿Pregunta de prueba?
+                </h3>
+
+                <!-- Options Grid -->
+                <div id="quiz-options-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- Options injected -->
+                </div>
+
+                <!-- Feedback Panel (Shown after answering) -->
+                <div id="quiz-feedback-panel" class="hidden rounded-2xl p-4 sm:p-5 space-y-2 border-2">
+                    <div class="flex items-center gap-3">
+                        <div id="feedback-icon" class="text-2xl"></div>
+                        <h4 id="feedback-title" class="font-display font-bold text-lg"></h4>
+                    </div>
+                    <p id="feedback-explanation" class="text-sm font-medium"></p>
+                </div>
+
+                <!-- Footer Next Action Button -->
+                <div class="pt-2">
+                    <button id="quiz-next-btn" onclick="checkOrNextQuestion()" class="btn-3d w-full bg-roma-purple hover:bg-indigo-600 text-white font-display font-bold text-lg py-4 rounded-2xl shadow-[0_6px_0_#4c51bf] disabled:opacity-50 disabled:cursor-not-allowed">
+                        COMPROBAR RESPUESTA
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ================= VICTORY MODAL / RESULTS ================= -->
+        <section id="view-results" class="hidden animate-pop-in space-y-6 text-center">
+            <div class="bg-white border-4 border-slate-200 rounded-3xl p-8 shadow-2xl space-y-6 max-w-lg mx-auto">
+                <div class="text-7xl animate-bounce-subtle">🏆</div>
+                <h2 id="results-title" class="text-3xl font-display font-bold text-slate-900">
+                    ¡VICTORIA ROMANA!
+                </h2>
+                <p id="results-subtitle" class="text-slate-600">
+                    Has completado el examen con éxito.
+                </p>
+
+                <!-- Score Stats Card -->
+                <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-xs text-slate-400 block font-bold">PRECISIÓN</span>
+                        <span id="results-score-text" class="text-2xl font-display font-bold text-roma-green">100%</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-400 block font-bold">RECOMPENSA</span>
+                        <span id="results-xp-gained" class="text-2xl font-display font-bold text-amber-500">+50 XP</span>
+                    </div>
+                </div>
+
+                <!-- Next Action -->
+                <div class="space-y-3">
+                    <button id="results-continue-btn" onclick="continueToNextTopic()" class="btn-3d w-full bg-roma-green hover:bg-emerald-600 text-white font-display font-bold text-lg py-4 rounded-2xl shadow-[0_6px_0_#059669]">
+                        ¡CONTINUAR AL SIGUIENTE TEMA!
+                    </button>
+                    <button onclick="showView('map')" class="w-full text-slate-500 font-bold hover:text-slate-700 py-2 text-sm">
+                        Volver al Mapa de Misiones
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t-2 border-slate-200 bg-white py-4 text-center text-xs font-semibold text-slate-400">
+        Ludus Latinus • Basado en el manual Lingua Latina I (Laura Lamata) • ¡Aprende sin miedo!
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        /* ================= COURSE DATA & CURRICULUM ================= */
+        const topics = [
+            {
+                id: 1,
+                title: "Del Indoeuropeo al Castellano",
+                icon: "🏛️",
+                region: "Roma",
+                subtitle: "El origen de nuestro idioma y las lenguas romances.",
+                theoryHtml: `
+                    <p class="text-base sm:text-lg">¡Bienvenido a Roma! Sabías que el <strong>latín</strong> no nació de la nada? Proviene de una súper lengua prehistórica llamada <strong>Indoeuropeo</strong>.</p>
+                    <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 my-4">
+                        <h4 class="font-display font-bold text-amber-800 text-lg">💡 ¿De dónde vienen nuestras palabras?</h4>
+                        <p class="text-sm text-amber-900 mt-1">El latín vulgar (el que hablaba la gente en la calle, soldados y comerciantes) evolucionó y dio origen a las <strong>Lenguas Romances</strong>: Castellano, Catalán, Gallego, Portugués, Francés, Italiano y Rumano.</p>
+                    </div>
+                    <ul class="list-disc pl-6 space-y-2 text-sm sm:text-base">
+                        <li><strong>Latín Culto:</strong> El que escribían filósofos y poetas como Cicerón o Virgilio.</li>
+                        <li><strong>Latín Vulgar:</strong> El idioma vivo del pueblo que originó el español.</li>
+                        <li><strong>Ojo:</strong> El Euskera <em>NO</em> proviene del latín ni del indoeuropeo.</li>
+                    </ul>
+                `,
+                questions: [
+                    {
+                        q: "¿De qué gran familia lingüística proviene el latín?",
+                        options: ["Semítica", "Indoeuropea", "Urálica", "Afroasiática"],
+                        correct: 1,
+                        explain: "El latín pertenece al grupo itálico de la familia indoeuropea."
+                    },
+                    {
+                        q: "¿Qué variedad del latín dio origen al castellano y las demás lenguas romances?",
+                        options: ["Latín Culto", "Latín Poético", "Latín Vulgar", "Latín Eclesiástico"],
+                        correct: 2,
+                        explain: "El latín vulgar (hablado por el pueblo y soldados) fue el que evolucionó en lenguas romances."
+                    },
+                    {
+                        q: "¿Cuál de estas lenguas NO es indoeuropea?",
+                        options: ["Euskera", "Francés", "Italiano", "Griego"],
+                        correct: 0,
+                        explain: "El Euskera es una lengua prerromana no indoeuropea."
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "El Alfabeto y la Pronunciación",
+                icon: "🗣️",
+                region: "Lacio",
+                subtitle: "Pronuncia el latín como un verdadero legionario.",
+                theoryHtml: `
+                    <p>¡Aprender a pronunciar latín clásico es facilísimo! Solo debes recordar estas reglas de oro:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
+                        <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-3.5">
+                            <span class="font-display font-bold text-purple-700 block">1. La 'C' y la 'G'</span>
+                            <p class="text-xs text-purple-900 mt-1">Siempre suenan duras: <em>Cicero</em> se lee "Kíkerō" y <em>genus</em> como "guenus".</p>
+                        </div>
+                        <div class="bg-rose-50 border-2 border-rose-200 rounded-2xl p-3.5">
+                            <span class="font-display font-bold text-rose-700 block">2. La 'V' y la 'LL'</span>
+                            <p class="text-xs text-rose-900 mt-1">La 'V' suena como la 'u' / 'w' (ej. <em>veni</em> = "weni"). La 'LL' son dos 'l' seguidas.</p>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-4">
+                        <h4 class="font-display font-bold text-emerald-800">¡Regla de Acentuación!</h4>
+                        <p class="text-xs text-emerald-900 mt-1">En latín <strong>NO existen las palabras agudas</strong>. Las palabras son llanas o esdrújulas.</p>
+                    </div>
+                `,
+                questions: [
+                    {
+                        q: "En pronunciación clásica restituida, ¿cómo se lee 'Caesar'?",
+                        options: ["Sésar", "Káesar", "Chésar", "Zésar"],
+                        correct: 1,
+                        explain: "La 'C' suena siempre /k/ y 'ae' es un diptongo."
+                    },
+                    {
+                        q: "¿Existen las palabras agudas en latín clásico estándar?",
+                        options: ["Sí, la mayoría", "No, en latín no hay palabras agudas", "Sólo en los nombres propios", "Sólo en los verbos"],
+                        correct: 1,
+                        explain: "En latín las palabras son llanas o esdrújulas, nunca agudas."
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "¿Qué es Declinar? Los Casos",
+                icon: "🧩",
+                region: "Campania",
+                subtitle: "El superpoder de las terminaciones de las palabras.",
+                theoryHtml: `
+                    <p>En español usamos preposiciones (<em>de, para, con</em>). En latín cambian el final de la palabra. A eso se le llama <strong>Declinar</strong> y cada función se llama <strong>Caso</strong>:</p>
+                    <div class="overflow-x-auto my-4">
+                        <table class="w-full text-left text-xs sm:text-sm border-2 border-slate-200 rounded-xl overflow-hidden">
+                            <thead class="bg-slate-100 font-display font-bold text-slate-700">
+                                <tr><th class="p-2.5">Caso</th><th class="p-2.5">Función</th><th class="p-2.5">Ejemplo</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                <tr><td class="p-2.5 font-bold text-purple-600">Nominativo</td><td class="p-2.5">Sujeto</td><td class="p-2.5"><strong>La rosa</strong> florece</td></tr>
+                                <tr><td class="p-2.5 font-bold text-purple-600">Vocativo</td><td class="p-2.5">Llamar a alguien</td><td class="p-2.5">¡Oh, <strong>rosa</strong>!</td></tr>
+                                <tr><td class="p-2.5 font-bold text-purple-600">Acusativo</td><td class="p-2.5">Objeto Directo (CD)</td><td class="p-2.5">Veo <strong>la rosa</strong></td></tr>
+                                <tr><td class="p-2.5 font-bold text-purple-600">Genitivo</td><td class="p-2.5">Posesión (CN)</td><td class="p-2.5">El olor <strong>de la rosa</strong></td></tr>
+                                <tr><td class="p-2.5 font-bold text-purple-600">Dativo</td><td class="p-2.5">Objeto Indirecto (CI)</td><td class="p-2.5">Doy agua <strong>a la rosa</strong></td></tr>
+                                <tr><td class="p-2.5 font-bold text-purple-600">Ablativo</td><td class="p-2.5">Circunstancial (CC)</td><td class="p-2.5">Juego <strong>con la rosa</strong></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `,
+                questions: [
+                    {
+                        q: "¿Qué caso se utiliza para indicar el Sujeto de la oración?",
+                        options: ["Acusativo", "Genitivo", "Nominativo", "Ablativo"],
+                        correct: 2,
+                        explain: "El Nominativo es el caso del Sujeto y del Atributo."
+                    },
+                    {
+                        q: "Si quieres decir 'El libro DE Marcos' (complemento del nombre), ¿qué caso usas?",
+                        options: ["Genitivo", "Dativo", "Vocativo", "Acusativo"],
+                        correct: 0,
+                        explain: "El Genitivo equivale a la preposición 'de' para indicar posesión."
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "1ª y 2ª Declinación",
+                badge: "Unidad 4",
+                icon: "🌹",
+                region: "Etruria",
+                subtitle: "Rosa (femenino), Dominus (masculino) y Templum (neutro).",
+                theoryHtml: `
+                    <div class="space-y-4">
+                        <p>Las palabras latinas se agrupan en 5 declinaciones. ¡Las dos primeras son las más famosas!</p>
+                        <div class="p-4 bg-rose-50 border-2 border-rose-200 rounded-2xl">
+                            <h4 class="font-display font-bold text-rose-700">1ª Declinación (Palabras en -a)</h4>
+                            <p class="text-xs text-rose-900 mt-1">Son mayormente femeninas. Ejemplo: <em>rosa, rosae</em>.</p>
+                            <span class="text-xs font-mono bg-white px-2 py-1 rounded mt-2 inline-block border">Singular: rosa, rosa, rosam, rosae, rosae, rosa</span>
+                        </div>
+                        <div class="p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl">
+                            <h4 class="font-display font-bold text-blue-700">2ª Declinación (Palabras en -us / -um)</h4>
+                            <p class="text-xs text-blue-900 mt-1">Masculinos (<em>dominus</em> = señor) y Neutros (<em>templum</em> = templo).</p>
+                            <p class="text-xs font-bold text-amber-700 mt-2">¡Regla de Oro de los Neutros!</p>
+                            <p class="text-xs text-slate-600">En todos los neutros, Nominativo, Vocativo y Acusativo son IGUALES, y en plural terminan siempre en <strong>-a</strong>.</p>
+                        </div>
+                    </div>
+                `,
+                questions: [
+                    {
+                        q: "¿En qué letra terminan los casos Nominativo, Vocativo y Acusativo plural de los sustantivos NEUTROS?",
+                        options: ["-os", "-is", "-a", "-um"],
+                        correct: 2,
+                        explain: "Todos los sustantivos neutros hacen su plural directos en '-a'."
+                    },
+                    {
+                        q: "¿Cuál es la terminación del Genitivo Singular en la 1ª Declinación?",
+                        options: ["-ae", "-i", "-is", "-um"],
+                        correct: 0,
+                        explain: "La 1ª declinación se reconoce por su Genitivo singular en '-ae' (ej. rosae)."
+                    }
+                ]
+            },
+            {
+                id: 5,
+                title: "Los Verbos: Presente de Indicativo",
+                icon: "⚔️",
+                region: "Galia",
+                subtitle: "Amo, Habeo, Dico, Audio: Las 4 conjugaciones.",
+                theoryHtml: `
+                    <p>Los verbos latinos tienen 4 conjugaciones principales según su vocal temática:</p>
+                    <ul class="list-disc pl-5 text-sm space-y-1 my-3">
+                        <li><strong>1ª (-are):</strong> Amo, amare (Amar)</li>
+                        <li><strong>2ª (-ere):</strong> Habeo, habere (Tener)</li>
+                        <li><strong>3ª (-ere breve):</strong> Dico, dicere (Decir)</li>
+                        <li><strong>4ª (-ire):</strong> Audio, audire (Oír)</li>
+                    </ul>
+                    <div class="p-4 bg-purple-50 border-2 border-purple-200 rounded-2xl">
+                        <h4 class="font-display font-bold text-purple-700">Desinencias Personales Activas:</h4>
+                        <p class="font-mono text-sm text-purple-900 mt-1">
+                            -o / -m (Yo)<br>
+                            -s (Tú)<br>
+                            -t (Él/Ella)<br>
+                            -mus (Nosotros)<br>
+                            -tis (Vosotros)<br>
+                            -nt (Ellos)
+                        </p>
+                    </div>
+                `,
+                questions: [
+                    {
+                        q: "¿Qué persona gramatical indica la desinencia verbal '-nt'?",
+                        options: ["Nosotros", "Vosotros", "3ª persona del plural (Ellos)", "Tú"],
+                        correct: 2,
+                        explain: "La desinencia '-nt' corresponde a 'ellos/ellas' (ej. amant = aman)."
+                    },
+                    {
+                        q: "¿A qué conjugación pertenece el verbo 'audio, audire'?",
+                        options: ["1ª conjugación", "2ª conjugación", "3ª conjugación", "4ª conjugación"],
+                        correct: 3,
+                        explain: "Su infinitivo en '-ire' señala que es de la 4ª conjugación."
+                    }
+                ]
+            },
+            {
+                id: 6,
+                title: "Tercera Declinación",
+                icon: "🛡️",
+                region: "Hispania",
+                subtitle: "Consonantes e 'i': La declinación más versátil.",
+                theoryHtml: `
+                    <p>La 3ª declinación es importantísima. Se reconoce porque su <strong>Genitivo singular termina en -is</strong>.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 my-3">
+                        <div class="p-3 bg-slate-50 border-2 rounded-xl">
+                            <span class="font-bold text-xs text-slate-700">Imparisílabos (Tema Consonante)</span>
+                            <p class="text-xs text-slate-500 mt-1">Distinto número de sílabas en Nom. y Gen. Ej: <em>miles, militis</em> (soldado).</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 border-2 rounded-xl">
+                            <span class="font-bold text-xs text-slate-700">Parisílabos (Tema en -i)</span>
+                            <p class="text-xs text-slate-500 mt-1">Mismo número de sílabas. Ej: <em>civis, civis</em> (ciudadano).</p>
+                        </div>
+                    </div>
+                    <p class="text-xs bg-amber-100 p-2 rounded-lg border border-amber-300 font-bold text-amber-800">
+                        ¡Atención! El Dativo/Ablativo plural en la 3ª declinación es <strong>-ibus</strong>.
+                    </p>
+                `,
+                questions: [
+                    {
+                        q: "¿Cuál es la terminación del Genitivo Singular de la 3ª Declinación?",
+                        options: ["-ae", "-i", "-is", "-us"],
+                        correct: 2,
+                        explain: "Todos los nombres de la 3ª declinación hacen el Genitivo singular en '-is'."
+                    },
+                    {
+                        q: "¿Cómo hacen el Dativo y Ablativo Plural los sustantivos de la 3ª Declinación?",
+                        options: ["-is", "-ibus", "-orum", "-ebus"],
+                        correct: 1,
+                        explain: "Utilizan la famosa terminación '-ibus'."
+                    }
+                ]
+            },
+            {
+                id: 7,
+                title: "Lugares y Complementos (Lugar)",
+                icon: "🗺️",
+                region: "Grecia",
+                subtitle: "Ubi, Quo, Unde, Qua: ¿Dónde estás y adónde vas?",
+                theoryHtml: `
+                    <p>Para expresar lugar en latín usamos 4 preguntas fundamentales:</p>
+                    <div class="space-y-2 text-xs sm:text-sm my-3">
+                        <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                            <strong>1. UBI? (¿Dónde? - Estado):</strong> En + Ablativo (ej. <em>in Roma sum</em> = estoy en Roma).
+                        </div>
+                        <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl">
+                            <strong>2. QUO? (¿Adónde? - Dirección):</strong> In / Ad + Acusativo (ej. <em>in Italiam eo</em> = voy a Italia).
+                        </div>
+                        <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl">
+                            <strong>3. UNDE? (¿De dónde? - Origen):</strong> Ex / Ab + Ablativo (ej. <em>ex urbe</em> = desde la ciudad).
+                        </div>
+                        <div class="p-2.5 bg-purple-50 border border-purple-200 rounded-xl">
+                            <strong>4. QUA? (¿Por dónde? - Paso):</strong> Per + Acusativo o Ablativo solo.
+                        </div>
+                    </div>
+                `,
+                questions: [
+                    {
+                        q: "¿Qué caso se utiliza tras la preposición 'IN' cuando indica dirección (¿Adónde? / Quo)?",
+                        options: ["Ablativo", "Acusativo", "Genitivo", "Dativo"],
+                        correct: 1,
+                        explain: "Movimiento o dirección (QUO?) exige la preposición con Acusativo."
+                    },
+                    {
+                        q: "¿Qué pregunta latina responde a la pregunta '¿De dónde vienes?' (Origen)?",
+                        options: ["Ubi?", "Quo?", "Unde?", "Qua?"],
+                        correct: 2,
+                        explain: "'UNDE?' significa '¿de dónde?' e indica procedencia."
+                    }
+                ]
+            },
+            {
+                id: 8,
+                title: "4ª y 5ª Declinación",
+                icon: "⛺",
+                region: "Britania",
+                subtitle: "Exercitus (Ejército) y Res (Cosa/Asunto).",
+                theoryHtml: `
+                    <p>Las últimas dos declinaciones son más breves pero muy frecuentes en los textos:</p>
+                    <div class="space-y-3 my-3">
+                        <div class="p-3 bg-amber-50 border-2 border-amber-200 rounded-xl">
+                            <h4 class="font-bold text-amber-800 text-sm">4ª Declinación (Genitivo -us)</h4>
+                            <p class="text-xs text-amber-900 mt-1">Temas en -u. Ej: <em>manus, manus</em> (mano) o <em>exercitus, exercitus</em> (ejército).</p>
+                        </div>
+                        <div class="p-3 bg-indigo-50 border-2 border-indigo-200 rounded-xl">
+                            <h4 class="font-bold text-indigo-800 text-sm">5ª Declinación (Genitivo -ei)</h4>
+                            <p class="text-xs text-indigo-900 mt-1">Temas en -e. Ej: <em>res, rei</em> (cosa/asunto) o <em>dies, diei</em> (día).</p>
+                        </div>
+                    </div>
+                `,
+                questions: [
+                    {
+                        q: "¿Cuál es el Genitivo singular de la 5ª declinación (ej. res, rei)?",
+                        options: ["-is", "-us", "-ei", "-ae"],
+                        correct: 2,
+                        explain: "La 5ª declinación forma el Genitivo en '-ei'."
+                    },
+                    {
+                        q: "El sustantivo 'exercitus' (ejército) pertenece a la...",
+                        options: ["2ª Declinación", "3ª Declinación", "4ª Declinación", "5ª Declinación"],
+                        correct: 2,
+                        explain: "Al tener Genitivo singular 'exercitus', es de la 4ª declinación."
+                    }
+                ]
+            },
+            {
+                id: 9,
+                title: "Tiempos del Pasado y Futuro",
+                icon: "⏳",
+                region: "Egipto",
+                subtitle: "Imperfecto (-ba-) y Perfecto (-i, -isti, -it).",
+                theoryHtml: `
+                    <p>Aprender el pasado en latín es genial gracias a sus marcas clave:</p>
+                    <div class="p-4 bg-purple-50 border-2 border-purple-200 rounded-2xl my-3 space-y-2">
+                        <div>
+                            <span class="font-bold text-purple-700 text-sm">Pretérito Imperfecto:</span>
+                            <p class="text-xs text-purple-900">Se reconoce por el sufijo <strong>-BA-</strong> (ej. <em>amabat</em> = él amaba).</p>
+                        </div>
+                        <div class="pt-2 border-t">
+                            <span class="font-bold text-purple-700 text-sm">Pretérito Perfecto (Acción terminada):</span>
+                            <p class="text-xs text-purple-900">Usa desinencias propias: <em>-i, -isti, -it, -imus, -istis, -erunt</em> (ej. <em>amavit</em> = él amó).</p>
+                        </div>
+                    </div>
+                `,
+                questions: [
+                    {
+                        q: "¿Qué sufijo identifica al Pretérito Imperfecto de Indicativo (ej. amabat)?",
+                        options: ["-ba-", "-bi-", "-is-", "-re-"],
+                        correct: 0,
+                        explain: "El elemento '-ba-' es la marca inconfundible del imperfecto."
+                    },
+                    {
+                        q: "Traducción de 'amavit' (Pretérito Perfecto):",
+                        options: ["Él amaba", "Él amó / ha amado", "Él amará", "Amad vos"],
+                        correct: 1,
+                        explain: "Es pretérito perfecto de indicativo (acción acabada)."
+                    }
+                ]
+            },
+            {
+                id: 10,
+                title: "Cultura, Coliseo y Pronombres",
+                icon: "👑",
+                region: "Roma Imperial",
+                subtitle: "El Imperio, Julio César, el Coliseo y el relativo Qui, Quae, Quod.",
+                theoryHtml: `
+                    <p>¡Has llegado a la cumbre de la conquista romana!</p>
+                    <div class="space-y-3 my-3">
+                        <div class="p-3 bg-amber-50 border-2 border-amber-200 rounded-xl">
+                            <h4 class="font-bold text-amber-800 text-sm">El Pronombre Relativo</h4>
+                            <p class="text-xs text-amber-900 mt-1"><em>Qui, Quae, Quod</em> (el cual, la cual, lo cual). Concuerda con su antecedente en género y número.</p>
+                        </div>
+                        <div class="p-3 bg-rose-50 border-2 border-rose-200 rounded-xl">
+                            <h4 class="font-bold text-rose-800 text-sm">Historia de Roma</h4>
+                            <p class="text-xs text-rose-900 mt-1">Fundada en el <strong>753 a.C.</strong> Etapas: Monarquía -> República -> Imperio (iniciado por Octavio Augusto en el 27 a.C.).</p>
+                        </div>
+                    </div>
+                `,
+                questions: [
+                    {
+                        q: "¿Quién fue el primer Emperador de Roma?",
+                        options: ["Julio César", "Rómulo", "Octavio Augusto", "Nerva"],
+                        correct: 2,
+                        explain: "Octavio Augusto inauguró el periodo del Imperio en el 27 a.C."
+                    },
+                    {
+                        q: "¿En qué año legendario se sitúa la fundación de Roma?",
+                        options: ["509 a.C.", "753 a.C.", "27 a.C.", "476 d.C."],
+                        correct: 1,
+                        explain: "La tradición fija la fundación por Rómulo en el 753 a.C."
+                    }
+                ]
+            }
+        ];
+
+        /* ================= GAME STATE ================= */
+        let gameState = {
+            unlockedTopic: 1,
+            xp: 0,
+            hearts: 5,
+            streak: 1,
+            completedTopics: []
+        };
+
+        // Load saved game
+        const saved = localStorage.getItem('ludus_latinus_state');
+        if (saved) {
+            try {
+                gameState = { ...gameState, ...JSON.parse(saved) };
+            } catch(e) {}
+        }
+
+        let currentTopicId = 1;
+        let quizState = {
+            questions: [],
+            currentIndex: 0,
+            score: 0,
+            selectedOption: null,
+            isAnswered: false
+        };
+
+        /* ================= NAVIGATION & VIEWS ================= */
+        function saveState() {
+            localStorage.setItem('ludus_latinus_state', JSON.stringify(gameState));
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('stat-xp').textContent = gameState.xp;
+            document.getElementById('stat-hearts').textContent = gameState.hearts;
+            document.getElementById('stat-streak').textContent = gameState.streak;
+
+            // Update Progress Bar
+            const total = topics.length;
+            const completed = gameState.completedTopics.length;
+            const percent = Math.round((completed / total) * 100);
+            document.getElementById('map-progress-bar').style.width = `${percent}%`;
+            document.getElementById('map-progress-text').textContent = `${percent}% Completado`;
+        }
+
+        function showView(viewName) {
+            ['map', 'theory', 'quiz', 'results'].forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
+            });
+            const active = document.getElementById(`view-${viewName}`);
+            if (active) active.classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* ================= MAP GENERATOR ================= */
+        function renderMap() {
+            const container = document.getElementById('level-nodes-container');
+            container.innerHTML = '';
+
+            topics.forEach((topic, idx) => {
+                const isUnlocked = topic.id <= gameState.unlockedTopic;
+                const isCompleted = gameState.completedTopics.includes(topic.id);
+
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = "flex flex-col items-center w-full max-w-md relative";
+
+                // Node Button
+                const btn = document.createElement('button');
+                btn.onclick = () => {
+                    if (isUnlocked) {
+                        openTopicTheory(topic.id);
+                    }
+                };
+
+                let btnStyle = "";
+                if (isCompleted) {
+                    btnStyle = "bg-gradient-to-tr from-emerald-500 to-roma-green text-white border-emerald-600 shadow-[0_6px_0_#047857]";
+                } else if (isUnlocked) {
+                    btnStyle = "bg-gradient-to-tr from-amber-400 to-roma-gold text-slate-900 border-amber-500 shadow-[0_6px_0_#d97706] animate-bounce-subtle";
+                } else {
+                    btnStyle = "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-80 shadow-[0_4px_0_#cbd5e1]";
+                }
+
+                btn.className = `btn-3d w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-4 flex flex-col items-center justify-center text-3xl sm:text-4xl transition relative z-10 ${btnStyle}`;
+                btn.innerHTML = `
+                    <span>${isUnlocked ? topic.icon : '🔒'}</span>
+                    ${isCompleted ? '<span class="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs p-1 rounded-full border-2 border-white"><i class="fa-solid fa-check"></i></span>' : ''}
+                `;
+
+                // Info Label Card below node
+                const infoCard = document.createElement('div');
+                infoCard.className = `mt-3 text-center px-4 py-2 rounded-2xl border-2 text-xs sm:text-sm font-display font-bold max-w-xs ${
+                    isUnlocked ? 'bg-white border-slate-200 text-slate-800 shadow-sm' : 'bg-slate-100 border-slate-200 text-slate-400'
+                }`;
+                infoCard.innerHTML = `
+                    <span class="text-[10px] uppercase text-purple-600 block">Nivel ${topic.id} • ${topic.region}</span>
+                    <span>${topic.title}</span>
+                `;
+
+                nodeWrapper.appendChild(btn);
+                nodeWrapper.appendChild(infoCard);
+                container.appendChild(nodeWrapper);
+            });
+
+            renderBadges();
+            updateHUD();
+        }
+
+        function renderBadges() {
+            const container = document.getElementById('badges-container');
+            container.innerHTML = '';
+
+            const badgeList = [
+                { id: 1, name: "Legionario Novato", icon: "🛡️", req: 1 },
+                { id: 2, name: "Centurión", icon: "⚔️", req: 4 },
+                { id: 3, name: "César del Latín", icon: "👑", req: 8 },
+                { id: 4, name: "Imperator Maximus", icon: "🏆", req: 10 }
+            ];
+
+            badgeList.forEach(b => {
+                const earned = gameState.completedTopics.length >= b.req;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border-2 text-center flex flex-col items-center justify-center ${
+                    earned ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-slate-100 border-slate-200 text-slate-400 opacity-60'
+                }`;
+                card.innerHTML = `
+                    <div class="text-3xl mb-1">${b.icon}</div>
+                    <span class="font-display font-bold text-xs">${b.name}</span>
+                    <span class="text-[10px] mt-0.5">${earned ? '¡Desbloqueado!' : `Completa ${b.req} temas`}</span>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        /* ================= THEORY / LESSON LOGIC ================= */
+        function openTopicTheory(topicId) {
+            currentTopicId = topicId;
+            const topic = topics.find(t => t.id === topicId);
+            if (!topic) return;
+
+            document.getElementById('theory-topic-tag').textContent = `Tema ${topic.id} de ${topics.length}`;
+            document.getElementById('theory-icon').textContent = topic.icon;
+            document.getElementById('theory-title').textContent = topic.title;
+            document.getElementById('theory-subtitle').textContent = topic.subtitle;
+            document.getElementById('theory-content').innerHTML = topic.theoryHtml;
+
+            showView('theory');
+        }
+
+        /* ================= QUIZ & SPACED REPETITION LOGIC ================= */
+        function startQuizForCurrentTopic() {
+            const topic = topics.find(t => t.id === currentTopicId);
+            if (!topic) return;
+
+            // 1. Current Topic Questions
+            let pool = topic.questions.map(q => ({
+                ...q,
+                originTag: `Tema ${topic.id}: ${topic.title}`
+            }));
+
+            // 2. Mix in Spaced Repetition questions from previous unlocked topics
+            if (currentTopicId > 1) {
+                let prevQuestions = [];
+                for (let i = 1; i < currentTopicId; i++) {
+                    const prevT = topics.find(t => t.id === i);
+                    if (prevT) {
+                        prevT.questions.forEach(q => {
+                            prevQuestions.push({
+                                ...q,
+                                originTag: `⚡ Repaso Tema ${prevT.id}: ${prevT.title}`
+                            });
+                        });
+                    }
+                }
+                // Pick 1-2 random review questions
+                prevQuestions.sort(() => Math.random() - 0.5);
+                pool = pool.concat(prevQuestions.slice(0, 2));
+            }
+
+            // Shuffle full quiz pool
+            quizState.questions = pool;
+            quizState.currentIndex = 0;
+            quizState.score = 0;
+            quizState.selectedOption = null;
+            quizState.isAnswered = false;
+
+            showView('quiz');
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const qObj = quizState.questions[quizState.currentIndex];
+            quizState.selectedOption = null;
+            quizState.isAnswered = false;
+
+            // Update Progress Header
+            const percent = Math.round(((quizState.currentIndex) / quizState.questions.length) * 100);
+            document.getElementById('quiz-progress-bar').style.width = `${percent}%`;
+            document.getElementById('quiz-question-counter').textContent = `${quizState.currentIndex + 1} / ${quizState.questions.length}`;
+
+            document.getElementById('quiz-tag-origin').textContent = qObj.originTag;
+            document.getElementById('quiz-question-title').textContent = qObj.q;
+
+            // Hide feedback panel
+            const fbPanel = document.getElementById('quiz-feedback-panel');
+            fbPanel.classList.add('hidden');
+
+            // Next button state
+            const btn = document.getElementById('quiz-next-btn');
+            btn.textContent = "COMPROBAR RESPUESTA";
+            btn.className = "btn-3d w-full bg-roma-purple hover:bg-indigo-600 text-white font-display font-bold text-lg py-4 rounded-2xl shadow-[0_6px_0_#4c51bf] opacity-50 cursor-not-allowed";
+            btn.disabled = true;
+
+            // Render Options
+            const grid = document.getElementById('quiz-options-grid');
+            grid.innerHTML = '';
+
+            qObj.options.forEach((opt, idx) => {
+                const optBtn = document.createElement('button');
+                optBtn.id = `opt-btn-${idx}`;
+                optBtn.onclick = () => selectQuizOption(idx);
+                optBtn.className = "w-full text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-slate-300 font-medium text-slate-800 transition flex items-center justify-between shadow-sm";
+                optBtn.innerHTML = `
+                    <span>${opt}</span>
+                    <div class="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-xs">
+                        ${String.fromCharCode(65 + idx)}
+                    </div>
+                `;
+                grid.appendChild(optBtn);
+            });
+        }
+
+        function selectQuizOption(idx) {
+            if (quizState.isAnswered) return;
+
+            quizState.selectedOption = idx;
+
+            // Highlight chosen option
+            quizState.questions[quizState.currentIndex].options.forEach((_, oIdx) => {
+                const btn = document.getElementById(`opt-btn-${oIdx}`);
+                if (oIdx === idx) {
+                    btn.className = "w-full text-left p-4 rounded-2xl border-4 border-roma-purple bg-purple-50 font-bold text-purple-900 transition flex items-center justify-between shadow-md";
+                } else {
+                    btn.className = "w-full text-left p-4 rounded-2xl border-2 border-slate-200 bg-white text-slate-800 transition flex items-center justify-between opacity-70";
+                }
+            });
+
+            // Enable check button
+            const btn = document.getElementById('quiz-next-btn');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function checkOrNextQuestion() {
+            if (!quizState.isAnswered) {
+                // Check Answer
+                quizState.isAnswered = true;
+                const qObj = quizState.questions[quizState.currentIndex];
+                const isCorrect = quizState.selectedOption === qObj.correct;
+
+                const fbPanel = document.getElementById('quiz-feedback-panel');
+                const fbIcon = document.getElementById('feedback-icon');
+                const fbTitle = document.getElementById('feedback-title');
+                const fbExplain = document.getElementById('feedback-explanation');
+
+                fbPanel.classList.remove('hidden');
+
+                if (isCorrect) {
+                    quizState.score++;
+                    fbPanel.className = "rounded-2xl p-4 sm:p-5 space-y-2 border-2 bg-emerald-50 border-emerald-300 text-emerald-900";
+                    fbIcon.innerHTML = "🎉";
+                    fbTitle.textContent = "¡CORRECTO! +10 XP";
+                    fbExplain.textContent = qObj.explain;
+                    
+                    // Trigger small confetti burst
+                    if (typeof confetti === 'function') {
+                        confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
+                    }
+                } else {
+                    fbPanel.className = "rounded-2xl p-4 sm:p-5 space-y-2 border-2 bg-rose-50 border-rose-300 text-rose-900";
+                    fbIcon.innerHTML = "❌";
+                    fbTitle.textContent = "¡CASI! Revisa la explicación:";
+                    fbExplain.textContent = qObj.explain;
+
+                    // Deduct life if available
+                    if (gameState.hearts > 1) {
+                        gameState.hearts--;
+                        saveState();
+                    }
+                }
+
+                // Highlight correct and wrong buttons
+                qObj.options.forEach((_, oIdx) => {
+                    const btn = document.getElementById(`opt-btn-${oIdx}`);
+                    btn.disabled = true;
+                    if (oIdx === qObj.correct) {
+                        btn.className = "w-full text-left p-4 rounded-2xl border-4 border-emerald-500 bg-emerald-100 font-bold text-emerald-900 flex items-center justify-between";
+                    } else if (oIdx === quizState.selectedOption) {
+                        btn.className = "w-full text-left p-4 rounded-2xl border-4 border-rose-500 bg-rose-100 font-bold text-rose-900 flex items-center justify-between";
+                    }
+                });
+
+                const btn = document.getElementById('quiz-next-btn');
+                btn.textContent = quizState.currentIndex + 1 < quizState.questions.length ? "SIGUIENTE PREGUNTA ➔" : "VER RESULTADOS FINAL ➔";
+                btn.className = "btn-3d w-full bg-roma-green hover:bg-emerald-600 text-white font-display font-bold text-lg py-4 rounded-2xl shadow-[0_6px_0_#059669]";
+
+            } else {
+                // Advance to next question or finished
+                quizState.currentIndex++;
+                if (quizState.currentIndex < quizState.questions.length) {
+                    renderQuizQuestion();
+                } else {
+                    finishQuiz();
+                }
+            }
+        }
+
+        /* ================= QUIZ FINISH & UNLOCKING ================= */
+        function finishQuiz() {
+            const total = quizState.questions.length;
+            const percent = Math.round((quizState.score / total) * 100);
+            const passed = percent >= 60;
+
+            if (passed) {
+                // Award XP
+                const xpEarned = 50 + (quizState.score * 10);
+                gameState.xp += xpEarned;
+
+                // Mark completed
+                if (!gameState.completedTopics.includes(currentTopicId)) {
+                    gameState.completedTopics.push(currentTopicId);
+                }
+
+                // Unlock next level
+                if (currentTopicId >= gameState.unlockedTopic && gameState.unlockedTopic < topics.length) {
+                    gameState.unlockedTopic = currentTopicId + 1;
+                }
+
+                saveState();
+
+                // Big Victory Confetti
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } });
+                }
+
+                document.getElementById('results-title').textContent = "¡VICTORIA ROMANA!";
+                document.getElementById('results-subtitle').textContent = `¡Has superado el examen con éxito y conquistado la lección!`;
+                document.getElementById('results-score-text').textContent = `${percent}%`;
+                document.getElementById('results-xp-gained').textContent = `+${xpEarned} XP`;
+
+                const continueBtn = document.getElementById('results-continue-btn');
+                if (currentTopicId < topics.length) {
+                    continueBtn.textContent = "¡IR AL SIGUIENTE TEMA!";
+                    continueBtn.onclick = () => {
+                        currentTopicId++;
+                        openTopicTheory(currentTopicId);
+                    };
+                } else {
+                    continueBtn.textContent = "¡HAS COMPLETADO TODO EL CURSO!";
+                    continueBtn.onclick = () => showView('map');
+                }
+
+            } else {
+                document.getElementById('results-title').textContent = "¡AÚN NO SOLDER!";
+                document.getElementById('results-subtitle').textContent = `Obtuviste un ${percent}%. Necesitas al menos un 60% para desbloquear el siguiente nivel. ¡Repasa la teoría e inténtalo de nuevo!`;
+                document.getElementById('results-score-text').textContent = `${percent}%`;
+                document.getElementById('results-xp-gained').textContent = `+0 XP`;
+
+                const continueBtn = document.getElementById('results-continue-btn');
+                continueBtn.textContent = "REPASAR TEORÍA E INTENTAR DE NUEVO";
+                continueBtn.onclick = () => openTopicTheory(currentTopicId);
+            }
+
+            showView('results');
+            renderMap();
+        }
+
+        // Initialize App on load
+        window.onload = function() {
+            renderMap();
+            showView('map');
+        };
+    </script>
+</body>
+</html>
